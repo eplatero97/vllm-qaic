@@ -16,6 +16,7 @@ from copy import copy, deepcopy
 from dataclasses import dataclass
 from queue import Queue
 from typing import TYPE_CHECKING, NamedTuple
+from collections.abc import Callable
 
 import numpy as np
 import torch
@@ -29,7 +30,6 @@ from vllm.distributed.kv_transfer.kv_connector.base import KVConnectorBase
 from vllm.forward_context import get_forward_context, set_forward_context
 from vllm_qaic.logger import init_logger
 from vllm.lora.request import LoRARequest
-from vllm.platforms import current_platform
 from vllm.sequence import IntermediateTensors
 from vllm.tasks import GenerationTask, SupportedTask
 from vllm.utils.import_utils import PlaceholderModule
@@ -43,7 +43,7 @@ from vllm.v1.outputs import (
     SamplerOutput,
 )
 from vllm.v1.sample.metadata import SamplingMetadata
-from vllm.v1.sample.rejection_sampler import RejectionSampler
+from vllm.v1.sample.rejection_sampler import PLACEHOLDER_TOKEN_ID, RejectionSampler
 from vllm.v1.spec_decode.draft_model import DraftModelProposer
 from vllm.v1.spec_decode.eagle import EagleProposer
 from vllm.v1.spec_decode.metadata import SpecDecodeMetadata
@@ -206,7 +206,7 @@ class QaicAsyncGPUModelRunnerOutput(AsyncModelRunnerOutput):
             sampler_output = mr._make_sampler_output(
                 torch.zeros((len(self._input_batch_req_ids), 1), dtype=torch.int64)
             )
-            # 3. Discard samped tokens for partial prefills
+            # 3. Discard sampled tokens for partial prefills
             kv_connector_output = self._kv_connector_output
             discard_sampled_tokens_req_indices = np.nonzero(
                 state.discard_request_mask_np
@@ -238,24 +238,65 @@ class QaicAsyncGPUModelRunnerOutput(AsyncModelRunnerOutput):
             return self._output
 
         # 1. Wait for inference completiong
-        mr.complete_all_inf(
-            state.pending_prefill_exec_queue, state.num_decodes_executed
-        )
+        with mr._time_block("complete_all_inf"):
+            mr.complete_all_inf(
+                state.pending_prefill_exec_queue, state.num_decodes_executed
+            )
         # 2. Compute hidden states + logits
-        hidden_states, logits = mr._compute_hidden_states_and_logits(
-            state.hidden_states_decode,
-            state.hidden_states_prefill,
-            state.num_decodes_executed,
-            spec_decode_metadata=state.spec_decode_metadata,
-        )
+        with mr._time_block("compute_hidden_states_and_logits"):
+            hidden_states, logits = mr._compute_hidden_states_and_logits(
+                state.hidden_states_decode,
+                state.hidden_states_prefill,
+                state.num_decodes_executed,
+                spec_decode_metadata=state.spec_decode_metadata,
+            )
         # Apply structured output bitmasks if present.
         if self._grammar_output is not None:
             apply_grammar_bitmask(
                 state.scheduler_output, self._grammar_output, mr.input_batch, logits
             )
 
+        # _sample() records its own sub-segment timings (sample.rejection_sampler,
+        # sample.update_output_ids, ...) into _step_timings when timing is on, so
+        # it is not wrapped in an outer "sample" block (that would double-count).
         sampler_output = mr._sample(logits, state.spec_decode_metadata)
-        mr.input_batch.prev_sampled_token_ids = None
+        # Async spec decode (ngram/suffix): the rejection sampler returns
+        # sampled_token_ids of shape (num_reqs, K+1) with rejected positions set
+        # to PLACEHOLDER_TOKEN_ID. The inherited async _bookkeeping_sync asserts
+        # shape[-1] == 1 when prev_sampled_token_ids is None, so we must set
+        # prev_sampled_token_ids ourselves (to the per-request "next" token, i.e.
+        # the last accepted token, shape (num_reqs, 1)). This mirrors what the
+        # GPU ngram_gpu path does via _copy_valid_sampled_token_count, and also
+        # feeds _prepare_input_ids on the next step. We also cache the per-request
+        # accepted-token counts so our _get_valid_sampled_token_count override can
+        # drive the num_computed_tokens correction next step.
+        spec_meta = state.spec_decode_metadata
+        if mr.use_async_scheduling and spec_meta is not None:
+            with mr._time_block("compute_async_spec_next_tokens"):
+                next_token_ids, accepted_counts = mr._compute_async_spec_next_tokens(
+                    sampler_output.sampled_token_ids
+                )
+            mr.input_batch.prev_sampled_token_ids = next_token_ids
+            mr._qaic_valid_sampled_token_count = accepted_counts
+        elif mr.use_async_scheduling and mr.speculative_config is not None:
+            # Zero-real-draft async step: Part B skipped the rejection sampler
+            # (spec_decode_metadata is None, plain sampler ran → sampled_token_ids
+            # is (num_reqs, 1)). But the AsyncScheduler still reserved K spec slots
+            # per request, so the inherited _update_states optimistically advanced
+            # num_computed_tokens / output_token_ids by K (prev_num_draft_len == K,
+            # read from the placeholder dict) and queued a deferred correction that
+            # rolls those K back using _get_valid_sampled_token_count next step.
+            # We must therefore still supply per-request accepted counts (= 1, the
+            # bonus token; 0 drafts accepted) and set prev_sampled_token_ids from
+            # the plain sampler output — exactly what the non-skip path would have
+            # produced with all K drafts rejected. Leaving these None would skip
+            # the rollback and drift num_computed_tokens up by K per skipped step.
+            sampled = sampler_output.sampled_token_ids
+            mr.input_batch.prev_sampled_token_ids = sampled
+            mr._qaic_valid_sampled_token_count = [1] * sampled.shape[0]
+        else:
+            mr.input_batch.prev_sampled_token_ids = None
+            mr._qaic_valid_sampled_token_count = None
 
         # 3. Book keep to update input batch
         (
@@ -266,7 +307,7 @@ class QaicAsyncGPUModelRunnerOutput(AsyncModelRunnerOutput):
             req_ids_output_copy,
             req_id_to_index_output_copy,
             invalid_req_indices,
-        ) = mr._bookkeeping_sync(
+        ) = mr._bookkeeping_sync_timed(
             state.scheduler_output,
             sampler_output,
             logits,
@@ -311,6 +352,35 @@ class QaicAsyncGPUModelRunnerOutput(AsyncModelRunnerOutput):
 
         output.sampled_token_ids = valid_sampled_token_ids
         output.logprobs = logprobs_lists
+
+        # Correct the async SpD acceptance-rate stats before proposing the next
+        # step's drafts (which resets _async_draft_lens_by_req). This writes
+        # scheduler_output.num_invalid_spec_tokens so update_from_output counts the
+        # real per-request draft count instead of the AsyncScheduler's fixed K.
+        mr._compute_async_num_invalid_spec_tokens(state.scheduler_output)
+
+        # Step 1: propose draft tokens for the NEXT step (ngram/suffix/draft).
+        # In sync mode this runs at the tail of sample_tokens(); in async mode it
+        # must run here, after bookkeeping, because the CPU proposers need the
+        # accepted token ids. The resulting drafts are stashed on the runner and
+        # scattered into input_ids by the next step's _prepare_input_ids (which
+        # runs inside execute_model after synchronize_input_prep drains us).
+        with mr._time_block("propose_draft_token_ids"):
+            mr._maybe_propose_async_draft_token_ids(
+                state.scheduler_output,
+                valid_sampled_token_ids,
+                state.spec_decode_metadata,
+                state.spec_decode_common_attn_metadata,
+            )
+
+        # Emit the async-mode per-step timing summary (labels match the sync
+        # path's sample_tokens() so the two scheduling modes are comparable).
+        mr._flush_step_timings()
+        mr._emit_spec_accept_trace(
+            state.scheduler_output,
+            valid_sampled_token_ids,
+            mr._async_raw_draft_ids_by_req,
+        )
 
         self._output = output
         return output
@@ -421,6 +491,25 @@ class QaicModelRunnerAoT(GPUModelRunner):
         self.use_cuda_graph = False
         self.cascade_attn_enabled = False
 
+        # Per-step timing instrumentation (gated by VLLM_QAIC_STEP_TIMING).
+        # When enabled, _time_block() accumulates labeled wall-clock durations
+        # into _step_timings; _flush_step_timings() logs a one-line summary per
+        # step. Labels are identical across the sync and async paths so the two
+        # scheduling modes can be compared directly. Zero overhead when off.
+        self._step_timing_enabled: bool = bool(envs.VLLM_QAIC_STEP_TIMING)
+        self._step_timings: dict[str, float] = {}
+        self._step_timing_count: int = 0
+
+        # Per-decode-step, per-request acceptance trace (draft_model isolation
+        # experiment). When on, both the sync and async paths emit one
+        # SPEC_ACCEPT_TRACE line per active request per step, logging the RAW
+        # proposed drafts + accepted tokens, for offline decomposition of the
+        # async spec-decode throughput gap. Zero overhead when off. See
+        # docs/qaic/async_scheduling_spec_decode_findings.md.
+        self._spec_accept_trace_enabled: bool = bool(envs.VLLM_QAIC_SPEC_ACCEPT_TRACE)
+        self._spec_accept_trace_step: int = 0
+        self._async_raw_draft_ids_by_req: dict[str, list[int]] | None = None
+
         assert device == torch.device("cpu")
         # --- Disaggregated serving flags (must precede drafter gating) ---
         self.is_kv_producer: bool = bool(
@@ -469,6 +558,21 @@ class QaicModelRunnerAoT(GPUModelRunner):
                 model_config=spec_cfg.draft_model_config,
                 quant_config=None,
             )
+            # draft_vllm_config.scheduler_config is still the SAME OBJECT as
+            # the target's scheduler_config (config_replace doesn't touch
+            # it). If the outer engine is async, this would also flip the
+            # draft model's OWN QaicCausalLM.use_async_scheduling to True --
+            # but QaicDraftModelProposer.propose() assumes every
+            # self.model(...) call blocks synchronously before the next
+            # line reads self._decode_logits. Give the draft model an
+            # independently-owned, forced-sync SchedulerConfig regardless
+            # of the outer engine's setting.
+            draft_scheduler_config = copy(self.vllm_config.scheduler_config)
+            draft_scheduler_config.async_scheduling = False
+            draft_vllm_config = config_replace(
+                draft_vllm_config,
+                scheduler_config=draft_scheduler_config,
+            )
             _draft_override = (self.vllm_config.additional_config or {}).get(
                 "draft_override_qaic_config"
             )
@@ -491,6 +595,20 @@ class QaicModelRunnerAoT(GPUModelRunner):
         # by the next execute_model()'s synchronize_input_prep() if it needs
         # this batch's exec object back before the engine calls get_output().
         self._pending_output: AsyncModelRunnerOutput | None = None
+        # Async spec decode (ngram/suffix): per-request count of tokens accepted
+        # in the PREVIOUS decode step (including the bonus token), ordered by the
+        # previous step's input-batch index. Consumed by the inherited
+        # _update_states correction via our _get_valid_sampled_token_count
+        # override. None when the previous step produced no spec output.
+        self._qaic_valid_sampled_token_count: list[int] | None = None
+        # Async spec decode (ngram/suffix): real (pre-padding) per-request draft
+        # length proposed at the END of the previous step, keyed by req_id (the
+        # request set/order can change by the time this is consumed at the START
+        # of the next step). None when no real drafts were proposed last step.
+        self._async_draft_lens_by_req: dict[str, int] | None = None
+        # Deferred num_computed_tokens correction closure returned by
+        # _update_states in the current step; invoked before _prepare_qaic_inputs.
+        self._deferred_spec_correction: Callable[[], None] | None = None
         self.kv_caches: list[list] = [
             [] for _ in range(vllm_config.scheduler_config.max_num_seqs)
         ]
@@ -604,7 +722,18 @@ class QaicModelRunnerAoT(GPUModelRunner):
                 prev_common_req_indices.append(prev_index)
                 # We need to compute the flattened input_ids index of the
                 # last token in each common request.
-                draft_len = len(scheduled_spec_tokens.get(req_id, ()))
+                if self.use_async_scheduling:
+                    # On async, scheduled_spec_decode_tokens is the fixed [-1]*K
+                    # placeholder for every request, but the current step's decode
+                    # layout was actually padded uniformly to active_k+1 tokens per
+                    # request (see _prepare_qaic_inputs: num_scheduled_tokens[
+                    # :num_decodes] = active_k + 1). Using the placeholder K here
+                    # instead of active_k desyncs draft_len from cu_num_tokens and
+                    # drives sample_flattened_indices negative on K=0 (skip) steps.
+                    # Match the real layout: draft_len == active_k.
+                    draft_len = self.active_k
+                else:
+                    draft_len = len(scheduled_spec_tokens.get(req_id, ()))
                 total_num_spec_tokens += draft_len
                 flattened_index = cu_num_tokens[cur_index].item() - 1
                 # example: cu_num_tokens = [2, 5, 8], draft_tokens = [1, 2, 2]
@@ -624,22 +753,22 @@ class QaicModelRunnerAoT(GPUModelRunner):
                 prev_draft_token_indices.extend(range(start, start + draft_len))
                 indices_match &= prev_index == flattened_index
                 max_flattened_index = max(max_flattened_index, flattened_index)
-        num_commmon_tokens = len(sample_flattened_indices)
-        if num_commmon_tokens == 0:
+        num_common_tokens = len(sample_flattened_indices)
+        if num_common_tokens == 0:
             # No requests in common with the previous iteration
             # So input_ids.cpu will have all the input ids.
             return
-        if indices_match and max_flattened_index == (num_commmon_tokens - 1):
+        if indices_match and max_flattened_index == (num_common_tokens - 1):
             # Common-case optimization: the batch is unchanged
             # and no reordering happened.
             # The indices are both the same permutation of 0..N-1 so
             # we can copy directly using a single slice.
-            self.input_ids.cpu[:num_commmon_tokens].copy_(
-                prev_sampled_token_ids[:num_commmon_tokens, 0],
+            self.input_ids.cpu[:num_common_tokens].copy_(
+                prev_sampled_token_ids[:num_common_tokens, 0],
                 non_blocking=True,
             )
             if self.enable_prompt_embeds:
-                self.is_token_ids.cpu[:num_commmon_tokens] = True
+                self.is_token_ids.cpu[:num_common_tokens] = True
             return
         # Upload the index tensors asynchronously so the scatter can be non-blocking.
         sampled_tokens_index_tensor = torch.tensor(
@@ -667,15 +796,46 @@ class QaicModelRunnerAoT(GPUModelRunner):
             prev_draft_token_indices, dtype=torch.int64, pin_memory=self.pin_memory
         ).to(self.device, non_blocking=True)
 
-        # because input_ids dtype is torch.int32,
-        # so convert draft_token_ids to torch.int32 here.
-        draft_token_ids = self._draft_token_ids.to(dtype=torch.int32)  # type: ignore
+        # Match the destination dtype for scatter_ (input_ids.cpu is int64 after
+        # _postprocess_tensors under SpD; was int32 before). scatter_ requires
+        # self.dtype == src.dtype.
+        draft_token_ids = self._draft_token_ids.to(dtype=self.input_ids.cpu.dtype)  # type: ignore
 
         self.input_ids.cpu.scatter_(
             dim=0,
             index=draft_tokens_index_tensor,
             src=draft_token_ids.flatten()[prev_draft_token_indices_tensor],
         )
+
+    def _async_batch_has_no_real_drafts(
+        self, scheduler_output: SchedulerOutput
+    ) -> bool:
+        """True if this async step's batch-wide effective draft count is 0.
+
+        The ``AsyncScheduler`` reserves a fixed ``[-1]*K`` placeholder in
+        ``scheduled_spec_decode_tokens`` for every decode request every step, so
+        the placeholder dict is useless as a "did the drafter propose anything?"
+        signal on the async path (it is always non-empty with length-K values).
+        The real per-request draft length proposed at the end of the previous step
+        lives in ``_async_draft_lens_by_req`` (populated by the previous step's
+        ``get_output()``, which ``synchronize_input_prep`` has already drained by
+        the time this runs). When the batch-wide effective count is 0 we can take
+        the same cheap K=0 / plain-sampler path sync gets for free (sync omits
+        zero-draft requests from ``scheduled_spec_decode_tokens`` entirely). See
+        docs/qaic/async_scheduling_spec_decode_findings.md.
+        """
+        if not self.use_async_scheduling:
+            return False
+        if not scheduler_output.scheduled_spec_decode_tokens:
+            return False
+        lens = self._async_draft_lens_by_req or {}
+        total_effective = sum(
+            min(lens.get(req_id, 0), len(draft_token_ids))
+            for req_id, draft_token_ids in (
+                scheduler_output.scheduled_spec_decode_tokens.items()
+            )
+        )
+        return total_effective == 0
 
     def _determine_active_k(self, scheduler_output: SchedulerOutput) -> int:
         """Return K to use for this decode step.
@@ -686,10 +846,217 @@ class QaicModelRunnerAoT(GPUModelRunner):
         """
         if len(self.decode_ks) <= 1 or self.num_decodes == 0:
             return self.decode_ks[-1]
+        if self.use_async_scheduling:
+            # On async the placeholder dict is always populated, so consult the
+            # real proposed-draft lengths instead (see
+            # _async_batch_has_no_real_drafts). This lets async take the same K=0
+            # fast path sync gets when the drafter found nothing this step,
+            # instead of always dispatching the full-K SpD kernel + rejection
+            # sampler.
+            if envs.VLLM_QAIC_ASYNC_SPEC_SAMPLER_SKIP and (
+                self._async_batch_has_no_real_drafts(scheduler_output)
+            ):
+                return 0
+            return self.decode_ks[-1]
         spec_tokens = scheduler_output.scheduled_spec_decode_tokens
         if spec_tokens and any(len(v) > 0 for v in spec_tokens.values()):
             return self.decode_ks[-1]  # proposals exist → full SpD kernel
         return 0  # no proposals → cheap fallback kernel
+
+    def _get_valid_sampled_token_count(self) -> list[int]:
+        """QAIC override: supply the previous step's accepted-token counts.
+
+        The inherited GPUModelRunner implementation reads a CUDA-populated
+        buffer (``valid_sampled_token_count_cpu``) guarded by a CUDA event, which
+        QAIC never populates. Async spec decode's num_computed_tokens correction
+        (in the inherited ``_update_states``) calls this to learn how many draft
+        tokens were actually accepted last step. We instead return the counts we
+        cached at the end of the previous ``get_output()`` (see
+        ``QaicAsyncGPUModelRunnerOutput`` bookkeeping). Returning ``[]`` makes the
+        correction a no-op, matching the upstream contract when unavailable.
+        """
+        return self._qaic_valid_sampled_token_count or []
+
+    def _compute_async_spec_next_tokens(
+        self, sampled_token_ids: torch.Tensor
+    ) -> tuple[torch.Tensor, list[int]]:
+        """Derive per-request next-token ids and accepted counts for async spec.
+
+        ``sampled_token_ids`` has shape ``(num_reqs, K+1)`` with rejected/pad
+        positions set to ``PLACEHOLDER_TOKEN_ID`` (-1). For each request:
+          - accepted count = number of valid (non-placeholder, in-vocab) tokens,
+          - next token = the last valid token (the token to feed next step).
+        Returns ``(next_token_ids[num_reqs, 1] int64, accepted_counts)``.
+        """
+        vocab_size = self.input_batch.vocab_size
+        ids_np = sampled_token_ids.cpu().numpy()
+        valid_mask = (ids_np != PLACEHOLDER_TOKEN_ID) & (ids_np < vocab_size)
+        num_reqs = ids_np.shape[0]
+        accepted_counts: list[int] = valid_mask.sum(axis=1).tolist()
+        next_tokens = np.zeros(num_reqs, dtype=np.int64)
+        for i in range(num_reqs):
+            row_valid = ids_np[i][valid_mask[i]]
+            if row_valid.size:
+                next_tokens[i] = int(row_valid[-1])
+        next_token_ids = torch.from_numpy(next_tokens).unsqueeze(1)
+        return next_token_ids, accepted_counts
+
+    def _compute_async_num_invalid_spec_tokens(
+        self, scheduler_output: SchedulerOutput
+    ) -> None:
+        """Correct async SpD acceptance-rate stats via ``num_invalid_spec_tokens``.
+
+        The ``AsyncScheduler`` reserves a fixed ``[-1]*K`` placeholder in
+        ``scheduled_spec_decode_tokens`` for every decode request every step,
+        because the real draft count isn't known until this step's deferred
+        ``get_output()`` runs the CPU proposer. So ``Scheduler.update_from_output``
+        would count ``num_draft_tokens = K`` for every request and treat the
+        surplus (``K`` minus what the drafter actually proposed) as *rejections
+        that never happened*, deflating the reported acceptance rate.
+
+        Upstream's ``update_draft_token_ids_in_output`` fixes this by populating
+        ``scheduler_output.num_invalid_spec_tokens[req_id] = K - real_count``, but
+        that hook is never invoked on the general async path (``EngineCore.post_step``
+        skips ``update_draft_token_ids`` when ``async_scheduling``). We reproduce it
+        here from ``self._async_draft_lens_by_req`` — the same real-draft-length
+        source that sizes the rejection sampler in ``_prepare_qaic_inputs`` — so the
+        stats stay consistent whether or not the sampler was skipped this step.
+
+        ``make_spec_decoding_stats`` subtracts ``num_invalid_spec_tokens`` from the
+        stats denominator *after* the ``num_computed_tokens``/
+        ``num_output_placeholders`` rollback (which correctly uses the reserved
+        ``K``), so this cannot perturb the KV/position accounting. Must run BEFORE
+        ``_maybe_propose_async_draft_token_ids``
+        resets ``_async_draft_lens_by_req``. See
+        docs/qaic/async_scheduling_spec_decode_findings.md.
+        """
+        if self.speculative_config is None or not self.use_async_scheduling:
+            return
+        lens = self._async_draft_lens_by_req or {}
+        num_invalid: dict[str, int] = {}
+        for (
+            req_id,
+            placeholder,
+        ) in scheduler_output.scheduled_spec_decode_tokens.items():
+            scheduled_len = len(placeholder)
+            effective = min(lens.get(req_id, 0), scheduled_len)
+            num_invalid[req_id] = scheduled_len - effective
+        scheduler_output.num_invalid_spec_tokens = num_invalid
+
+    def _maybe_propose_async_draft_token_ids(
+        self,
+        scheduler_output: SchedulerOutput,
+        valid_sampled_token_ids: list[list[int]],
+        spec_decode_metadata: SpecDecodeMetadata | None,
+        spec_decode_common_attn_metadata: QaicSpecDecodeCommonAttnMetadata | None,
+    ) -> None:
+        """Propose draft tokens for the next step from the async get_output path.
+
+        Mirrors the sync ``sample_tokens`` propose-after-bookkeeping block: reset
+        the cached draft ids, then (if the drafter fits) propose from the CPU
+        accepted tokens and copy them to CPU. The next step's
+        ``_prepare_input_ids`` scatters ``self._draft_token_ids`` into input_ids.
+        """
+        self._draft_token_ids = None
+        self._draft_token_req_ids = None
+        self._async_draft_lens_by_req = None
+        self._async_raw_draft_ids_by_req = None
+
+        spec_config = self.speculative_config
+        if spec_config is None or self.is_kv_producer:
+            return
+
+        if spec_config.uses_draft_model():
+            # Advance the drafter's own position tracker unconditionally, even
+            # if the capacity gate below skips the real proposal this step --
+            # see QaicDraftModelProposer.observe_step() for why this must not
+            # be skipped (num_tokens_no_spec drift under async scheduling).
+            assert self.drafter is not None
+            self.drafter.observe_step(self.input_batch.req_ids, valid_sampled_token_ids)
+
+        # The inherited async _bookkeeping_sync wrote exactly ONE PLACEHOLDER (-1)
+        # token into token_ids_cpu (and advanced num_tokens_no_spec by 1) per
+        # request — it assumes GPU-tensor-based proposers, which don't consult
+        # token_ids_cpu. QAIC's ngram/suffix proposers search token_ids_cpu
+        # directly for n-gram/suffix matches, so we must replace that placeholder
+        # with the REAL accepted token(s) (there may be more than 1 if drafts were
+        # accepted) from valid_sampled_token_ids, and correct num_tokens_no_spec
+        # to match — or the proposer only ever sees -1 in the history and the
+        # target model's KV cache position (num_tokens_no_spec-driven) drifts.
+        for req_idx, sampled_ids in enumerate(valid_sampled_token_ids):
+            if not sampled_ids:
+                continue
+            placeholder_end_idx = self.input_batch.num_tokens_no_spec[req_idx]
+            start_idx = placeholder_end_idx - 1  # undo the single placeholder slot
+            end_idx = start_idx + len(sampled_ids)
+            self.input_batch.token_ids_cpu[req_idx, start_idx:end_idx] = sampled_ids
+            self.input_batch.num_tokens_no_spec[req_idx] = end_idx
+
+        input_fits_in_drafter = spec_decode_common_attn_metadata is not None and (
+            spec_decode_common_attn_metadata.max_seq_len + self.num_spec_tokens
+            <= self.effective_drafter_max_model_len
+        )
+        if not input_fits_in_drafter:
+            return
+
+        draft_token_ids = self.propose_draft_token_ids(
+            scheduler_output,
+            valid_sampled_token_ids,
+            self.input_batch.sampling_metadata,
+            None,  # hidden_states (unused by ngram/suffix)
+            None,  # sample_hidden_states
+            None,  # aux_hidden_states
+            spec_decode_metadata,
+            spec_decode_common_attn_metadata,  # type: ignore[arg-type]
+            None,  # slot_mappings
+        )
+        # ngram/suffix return list[list[int]] of variable length (0..K) per
+        # request. The async draft scatter in _prepare_input_ids expects a dense
+        # [num_reqs, num_spec_tokens] tensor (it indexes flatten()[i*K + j]), and
+        # the AsyncScheduler always reserves exactly num_spec_tokens placeholder
+        # slots per request. Pad each request's drafts to num_spec_tokens with 0;
+        # any padded (or short-proposal) slot is a token the target will reject,
+        # and the num_computed_tokens correction reclaims the rejected slots.
+        if isinstance(draft_token_ids, list):
+            # Record the REAL (pre-padding) per-request draft length here, before
+            # it's discarded by padding to a dense [num_reqs, K] tensor below.
+            # Next step's _prepare_qaic_inputs uses this to size the rejection
+            # sampler's SpecDecodeMetadata to the real drafts instead of the
+            # optimistic full K the AsyncScheduler always reserves — see
+            # docs/qaic/async_scheduling_spec_decode_findings.md.
+            self._async_draft_lens_by_req = {
+                req_id: len(drafts)
+                for req_id, drafts in zip(
+                    self.input_batch.req_ids, draft_token_ids, strict=False
+                )
+            }
+            if self._spec_accept_trace_enabled:
+                # Keep the RAW pre-padding drafts (not just their lengths) so the
+                # acceptance trace can diff them against sync per request.
+                self._async_raw_draft_ids_by_req = {
+                    req_id: list(drafts)
+                    for req_id, drafts in zip(
+                        self.input_batch.req_ids, draft_token_ids, strict=False
+                    )
+                }
+            self._draft_token_ids = self._pad_draft_token_ids_to_tensor(draft_token_ids)
+        else:
+            self._draft_token_ids = draft_token_ids
+        self._copy_draft_token_ids_to_cpu(scheduler_output)
+
+    def _pad_draft_token_ids_to_tensor(
+        self, draft_token_ids: list[list[int]]
+    ) -> torch.Tensor:
+        """Pad variable-length per-request drafts to a [num_reqs, K] int tensor."""
+        num_reqs = len(draft_token_ids)
+        k = self.num_spec_tokens
+        padded = np.zeros((num_reqs, k), dtype=np.int32)
+        for i, drafts in enumerate(draft_token_ids):
+            if drafts:
+                n = min(len(drafts), k)
+                padded[i, :n] = drafts[:n]
+        return torch.from_numpy(padded)
+
     def _pool(
         self,
         hidden_states: torch.Tensor,
@@ -738,7 +1105,9 @@ class QaicModelRunnerAoT(GPUModelRunner):
         finished_mask_qaicpooler = [
             seq_len == prompt_len
             for seq_len, prompt_len in zip(
-                seq_lens_qaicpooler, pooling_metadata_qaicpooler.prompt_lens
+                seq_lens_qaicpooler,
+                pooling_metadata_qaicpooler.prompt_lens,
+                strict=False,
             )
         ]
 
@@ -845,6 +1214,16 @@ class QaicModelRunnerAoT(GPUModelRunner):
 
         spec_decode_metadata = None
         use_spec_decode = len(scheduler_output.scheduled_spec_decode_tokens) > 0
+        if use_spec_decode and self.use_async_scheduling and self.active_k == 0:
+            # active_k was selected by _determine_active_k just before this call.
+            # On async it is 0 exactly when the batch has no real drafts this step
+            # (see _async_batch_has_no_real_drafts) — in which case the forward
+            # emits 1 logit row per request (active_k+1) and _sample must use the
+            # plain sampler, not the rejection sampler. Leaving spec_decode_metadata
+            # None makes _sample take the plain-sampler branch, matching the K=0
+            # forward shape and giving async the same cheap path sync gets for free.
+            # See docs/qaic/async_scheduling_spec_decode_findings.md.
+            use_spec_decode = False
         if use_spec_decode:
             num_draft_tokens = np.zeros(num_reqs, dtype=np.int32)
             for (
@@ -852,7 +1231,20 @@ class QaicModelRunnerAoT(GPUModelRunner):
                 draft_token_ids,
             ) in scheduler_output.scheduled_spec_decode_tokens.items():
                 req_idx = self.input_batch.req_id_to_index[req_id]
-                num_draft_tokens[req_idx] = len(draft_token_ids)
+                scheduled_len = len(draft_token_ids)
+                if self.use_async_scheduling:
+                    # The AsyncScheduler always reserves the full optimistic K
+                    # placeholder slots per request (scheduled_len == K), which
+                    # would make the rejection sampler validate K positions
+                    # every step regardless of how many real drafts the
+                    # proposer actually found. Use the real (pre-padding)
+                    # length recorded at propose time instead, clamped to what
+                    # the scheduler reserved room for. See
+                    # docs/qaic/async_scheduling_spec_decode_findings.md.
+                    real_len = (self._async_draft_lens_by_req or {}).get(req_id, 0)
+                    num_draft_tokens[req_idx] = min(real_len, scheduled_len)
+                else:
+                    num_draft_tokens[req_idx] = scheduled_len
             spec_decode_metadata = self._calc_spec_decode_metadata(
                 num_draft_tokens, cu_num_tokens
             )
@@ -922,10 +1314,138 @@ class QaicModelRunnerAoT(GPUModelRunner):
         return metadata
 
     @contextmanager
+    def _time_block(self, label: str):
+        """Accumulate wall-clock time for `label` into the current step's
+        timing dict. No-op (aside from the yield) when step timing is off."""
+        if not self._step_timing_enabled:
+            yield
+            return
+        start = time.perf_counter()
+        try:
+            yield
+        finally:
+            self._step_timings[label] = (
+                self._step_timings.get(label, 0.0) + (time.perf_counter() - start) * 1e3
+            )
+
+    def _flush_step_timings(self) -> None:
+        """Log a one-line per-step timing summary and reset the accumulator.
+        Called once per step from sample_tokens() (sync) / get_output() (async)."""
+        if not self._step_timing_enabled or not self._step_timings:
+            return
+        self._step_timing_count += 1
+        mode = "async" if self.use_async_scheduling else "sync"
+        parts = " ".join(
+            f"{k}={v:.2f}ms" for k, v in sorted(self._step_timings.items())
+        )
+        total = sum(self._step_timings.values())
+        logger.info(
+            "STEP_TIMING[%s] step=%d total=%.2fms %s",
+            mode,
+            self._step_timing_count,
+            total,
+            parts,
+        )
+        self._step_timings = {}
+
+    def _emit_spec_accept_trace(
+        self,
+        scheduler_output: SchedulerOutput,
+        valid_sampled_token_ids: list[list[int]],
+        raw_drafts_by_req: dict[str, list[int]] | None,
+    ) -> None:
+        """Emit one SPEC_ACCEPT_TRACE line per active request per decode step.
+
+        Byte-identical format on the sync (sample_tokens) and async (get_output)
+        paths so an offline analyzer can match on (prompt-fingerprint, decode
+        position). Logs the RAW pre-padding drafts proposed THIS step (for the
+        NEXT step) and the tokens accepted THIS step, plus a still-active flag,
+        so the async fixed-K placeholder contamination can be separated from any
+        real acceptance loss. Zero overhead when off. See
+        docs/qaic/async_scheduling_spec_decode_findings.md (Follow-up 3)."""
+        if not self._spec_accept_trace_enabled:
+            return
+        self._spec_accept_trace_step += 1
+        step = self._spec_accept_trace_step
+        mode = "async" if self.use_async_scheduling else "sync"
+        req_ids = self.input_batch.req_ids
+        finished = scheduler_output.finished_req_ids or set()
+        npt_arr = self.input_batch.num_prompt_tokens
+        nts_arr = self.input_batch.num_tokens_no_spec
+        raw = raw_drafts_by_req or {}
+        for idx, req_id in enumerate(req_ids):
+            accepted = (
+                valid_sampled_token_ids[idx]
+                if idx < len(valid_sampled_token_ids)
+                else []
+            )
+            drafts = raw.get(req_id, [])
+            if not accepted and not drafts:
+                # Prefill / chunked-prefill row: nothing to attribute.
+                continue
+            npt = int(npt_arr[idx])
+            pos = int(nts_arr[idx]) - npt
+            pfp = self.input_batch.token_ids_cpu[idx, : min(5, npt)].tolist()
+            active = 0 if req_id in finished else 1
+            logger.info(
+                "SPEC_ACCEPT_TRACE[%s] step=%d req=%s pos=%d npt=%d pfp=%s "
+                "active=%d accepted=%s drafts=%s",
+                mode,
+                step,
+                req_id,
+                pos,
+                npt,
+                pfp,
+                active,
+                list(accepted),
+                list(drafts),
+            )
+
+    def _bookkeeping_sync_timed(self, *args, **kwargs):
+        """Timed wrapper around _bookkeeping_sync so the sync and async paths
+        record it under the same "bookkeeping" label."""
+        with self._time_block("bookkeeping"):
+            return self._bookkeeping_sync(*args, **kwargs)
+
+    def _sample(self, logits, spec_decode_metadata):
+        """Sub-instrumented override of GPUModelRunner._sample. When step timing
+        is off this is a thin pass-through to the parent. When on, it breaks the
+        sample step into its sub-calls so the sync/async gap can be localized:
+          sample.update_output_ids  - update_async_output_token_ids (penalties)
+          sample.update_spec_ids     - update_async_spec_token_ids (penalties)
+          sample.rejection_sampler   - the rejection sampler / sampler call
+        """
+        if not self._step_timing_enabled:
+            return super()._sample(logits, spec_decode_metadata)
+
+        sampling_metadata = self.input_batch.sampling_metadata
+        with self._time_block("sample.update_output_ids"):
+            self.input_batch.update_async_output_token_ids()
+        if spec_decode_metadata is None:
+            with self._time_block("sample.rejection_sampler"):
+                return self.sampler(logits=logits, sampling_metadata=sampling_metadata)
+        if self.use_async_scheduling and self._draft_token_req_ids is not None:
+            with self._time_block("sample.update_spec_ids"):
+                draft_token_ids_cpu, _ = self._get_draft_token_ids_cpu()
+                self.input_batch.update_async_spec_token_ids(draft_token_ids_cpu)
+        draft_probs = self._get_spec_decode_draft_probs(spec_decode_metadata)
+        with self._time_block("sample.rejection_sampler"):
+            return self.rejection_sampler(
+                spec_decode_metadata,
+                draft_probs,
+                logits,
+                sampling_metadata,
+            )
+
+    @contextmanager
     def synchronize_input_prep(self):
         if self.use_async_scheduling and self._pending_output is not None:
             # Drain the previous batch now, in case this batch needs its
             # exec object back before the engine calls get_output() on it.
+            # NOTE: get_output() accumulates its own segment timings
+            # (complete_all_inf, sample, bookkeeping, ...) into _step_timings and
+            # flushes them, so we do NOT wrap it in a _time_block here (that would
+            # double-count the same wall-clock).
             self._pending_output.get_output()
 
         yield
@@ -936,9 +1456,7 @@ class QaicModelRunnerAoT(GPUModelRunner):
         # upcast to float32 before sampling in _compute_hidden_states_and_logits.
         _dtype = getattr(self.model, "logits_dtype", np.float32)  # type: ignore[has-type]
         if num_decode_tokens > 1:
-            return np.empty(
-                (batch_size, num_decode_tokens, vocab_size), dtype=_dtype
-            )
+            return np.empty((batch_size, num_decode_tokens, vocab_size), dtype=_dtype)
         if self.model.logits_ndim == 3:  # type: ignore[has-type]
             return np.empty((batch_size, 1, vocab_size), dtype=_dtype)
         return np.empty((batch_size, vocab_size), dtype=_dtype)
@@ -1070,7 +1588,13 @@ class QaicModelRunnerAoT(GPUModelRunner):
                     "after execute_model() returns None."
                 )
 
-            self._update_states(scheduler_output)
+            # Capture the async spec-decode num_computed_tokens correction
+            # closure. Under async scheduling the CPU num_computed_tokens are
+            # optimistic (all K drafts assumed accepted); this closure decrements
+            # them by the number rejected last step, using the accepted counts we
+            # cached via _get_valid_sampled_token_count. Must run before
+            # _prepare_qaic_inputs, which reads num_computed_tokens for positions.
+            self._deferred_spec_correction = self._update_states(scheduler_output)
 
             if self.model.is_vision_encoder:
                 # This is referencing to gpu_model_runner
@@ -1107,10 +1631,18 @@ class QaicModelRunnerAoT(GPUModelRunner):
                 # no update needed.
                 self.model.active_k = self.active_k
 
+            # Apply the deferred async spec-decode correction (if any) now that
+            # the batch is stable and BEFORE positions are computed from
+            # num_computed_tokens in _prepare_qaic_inputs.
+            if self._deferred_spec_correction is not None:
+                self._deferred_spec_correction()
+                self._deferred_spec_correction = None
+
             # Prepare inputs
-            spec_decode_metadata = self._prepare_qaic_inputs(
-                scheduler_output, num_scheduled_tokens_np
-            )
+            with self._time_block("prepare_qaic_inputs"):
+                spec_decode_metadata = self._prepare_qaic_inputs(
+                    scheduler_output, num_scheduled_tokens_np
+                )
 
             # Split positions and inputs into decode and prefill
             # Variable-K: num_decode_tokens = num_decodes * (active_k + 1)
@@ -1261,27 +1793,33 @@ class QaicModelRunnerAoT(GPUModelRunner):
                 hidden_states_decode = self.create_logits_np(
                     self.model.decode_bsz, self.model.vocab_size, self.active_k + 1
                 )
-                self.model(
-                    input_ids=decode_input_ids,
-                    positions=decode_positions,
-                    batch_indices=decode_block_ids,
-                    is_prompt=False,
-                    logits=hidden_states_decode,
-                    callback=callback,
-                    lora_ids=decode_lora_ids,
-                )
+                # In sync mode this call blocks on the QAIC HW-completion wait
+                # (_run_decode -> complete_inf -> waitForCompletion); in async
+                # mode it only enqueues and returns immediately (the wait is
+                # deferred to complete_all_inf inside get_output()).
+                with self._time_block("model_decode_submit_or_wait"):
+                    self.model(
+                        input_ids=decode_input_ids,
+                        positions=decode_positions,
+                        batch_indices=decode_block_ids,
+                        is_prompt=False,
+                        logits=hidden_states_decode,
+                        callback=callback,
+                        lora_ids=decode_lora_ids,
+                    )
 
         hidden_states, logits = None, None
         num_decodes_executed = (
             self.num_decodes if not self.is_kv_consumer else len(self.cu_num_tokens)
         )
         if not self.use_async_scheduling:
-            hidden_states, logits = self._compute_hidden_states_and_logits(
-                hidden_states_decode,
-                hidden_states_prefill,
-                num_decodes_executed,
-                spec_decode_metadata=spec_decode_metadata,
-            )
+            with self._time_block("compute_hidden_states_and_logits"):
+                hidden_states, logits = self._compute_hidden_states_and_logits(
+                    hidden_states_decode,
+                    hidden_states_prefill,
+                    num_decodes_executed,
+                    spec_decode_metadata=spec_decode_metadata,
+                )
 
         spec_decode_common_attn_metadata = None
         if self.speculative_config is not None:
@@ -1409,6 +1947,8 @@ class QaicModelRunnerAoT(GPUModelRunner):
                 torch.zeros((len(self.batch_indices), 1), dtype=torch.int64)
             )
         else:
+            # _sample() records its own sub-segment timings when timing is on,
+            # so it is not wrapped in an outer "sample" block (avoids double-count).
             sampler_output = self._sample(logits, spec_decode_metadata)
 
         # AOT-only path: eager mode returns early via super().execute_model() above.
@@ -1417,18 +1957,19 @@ class QaicModelRunnerAoT(GPUModelRunner):
         self.input_batch.prev_sampled_token_ids = None
 
         def propose_draft_token_ids(sampled_token_ids):
-            self._draft_token_ids = self.propose_draft_token_ids(
-                scheduler_output,
-                sampled_token_ids,
-                self.input_batch.sampling_metadata,
-                hidden_states,
-                sample_hidden_states,
-                aux_hidden_states,
-                spec_decode_metadata,
-                spec_decode_common_attn_metadata,  # type: ignore[arg-type]
-                slot_mappings,
-            )
-            self._copy_draft_token_ids_to_cpu(scheduler_output)
+            with self._time_block("propose_draft_token_ids"):
+                self._draft_token_ids = self.propose_draft_token_ids(
+                    scheduler_output,
+                    sampled_token_ids,
+                    self.input_batch.sampling_metadata,
+                    hidden_states,
+                    sample_hidden_states,
+                    aux_hidden_states,
+                    spec_decode_metadata,
+                    spec_decode_common_attn_metadata,  # type: ignore[arg-type]
+                    slot_mappings,
+                )
+                self._copy_draft_token_ids_to_cpu(scheduler_output)
 
         # This block mirrors GPUModelRunner (gpu_model_runner.py:3640).
         # Difference: spec_decode_common_attn_metadata uses
@@ -1454,7 +1995,7 @@ class QaicModelRunnerAoT(GPUModelRunner):
             req_ids_output_copy,
             req_id_to_index_output_copy,
             invalid_req_indices,
-        ) = self._bookkeeping_sync(
+        ) = self._bookkeeping_sync_timed(
             scheduler_output,
             sampler_output,
             logits,
@@ -1462,10 +2003,38 @@ class QaicModelRunnerAoT(GPUModelRunner):
             scheduler_output.total_num_scheduled_tokens,
         )
 
+        if spec_config is not None and spec_config.uses_draft_model():
+            # Advance the drafter's own position tracker unconditionally, even
+            # if propose_drafts_after_bookkeeping is False this step -- see
+            # QaicDraftModelProposer.observe_step() for why this must not be
+            # skipped (num_tokens_no_spec drift under async scheduling).
+            assert self.drafter is not None
+            self.drafter.observe_step(req_ids_output_copy, valid_sampled_token_ids)
+
         if propose_drafts_after_bookkeeping:
             # ngram and other speculative decoding methods use the sampled
             # tokens on the CPU, so they are run after bookkeeping.
             propose_draft_token_ids(valid_sampled_token_ids)
+
+        # Emit the sync-mode per-step timing summary (labels match the async
+        # path's get_output() so the two scheduling modes are comparable).
+        self._flush_step_timings()
+        if self._spec_accept_trace_enabled:
+            # draft_model proposes list[list[int]] and (unlike async) sync does
+            # not pad it, so self._draft_token_ids is already the RAW drafts.
+            _raw = None
+            if propose_drafts_after_bookkeeping and isinstance(
+                self._draft_token_ids, list
+            ):
+                _raw = {
+                    req_id: list(drafts)
+                    for req_id, drafts in zip(
+                        self.input_batch.req_ids, self._draft_token_ids, strict=False
+                    )
+                }
+            self._emit_spec_accept_trace(
+                scheduler_output, valid_sampled_token_ids, _raw
+            )
 
         return ModelRunnerOutput(
             req_ids=req_ids_output_copy,

@@ -12,7 +12,6 @@ import numpy as np
 
 from vllm.config import VllmConfig
 from vllm_qaic.logger import init_logger
-from vllm.platforms import current_platform
 
 from vllm_qaic.model_loader.qaic import load_qaic_model
 
@@ -40,12 +39,20 @@ class QaicDraftModelProposer:
     """
 
     def __init__(self, draft_vllm_config: VllmConfig) -> None:
-        # The draft proposer runs prefill and autoregressive decode synchronously.
-        # Async scheduling is not supported because the pending_prefill_exec_queue
-        # returned by forward(is_prompt=True) would be silently discarded.
+        # propose() calls self.model(...) and immediately reads
+        # self._decode_logits on the next line, assuming every call blocks
+        # until the QAIC inference session completes. QaicModelRunnerAoT
+        # always builds draft_vllm_config with its OWN
+        # scheduler_config.async_scheduling forced to False, independent of
+        # the target engine's setting (see model_runner.py) -- so this
+        # assert is a defensive invariant check on that plumbing, not a
+        # feature gate: the target engine may itself run async_scheduling.
         assert not draft_vllm_config.scheduler_config.async_scheduling, (
-            "QaicDraftModelProposer requires synchronous scheduling "
-            "(async_scheduling=False). Async mode is not supported."
+            "Internal error: QaicDraftModelProposer's draft_vllm_config "
+            "must have scheduler_config.async_scheduling forced to False "
+            "independent of the target engine's async_scheduling setting "
+            "(see QaicModelRunnerAoT.__init__ in "
+            "vllm_qaic/worker/model_runner.py)."
         )
         self._draft_vllm_config = draft_vllm_config
         self.num_spec_tokens = (
@@ -62,6 +69,37 @@ class QaicDraftModelProposer:
                 "override_qaic_config", None
             )
         self.prefill_seq_len = _override_qaic_config.get("prefill_seq_len", 128)
+
+        # Tracks each request's draft-conditioning position independently of
+        # input_batch.num_tokens_no_spec, which drifts by up to K under async
+        # scheduling (see propose()'s current_positions comment below and
+        # docs/qaic/async_scheduling_spec_decode_findings.md, Follow-up 3).
+        # Seeded on each request's first decode step (a provably drift-free
+        # moment), then advanced purely by observed accepted-token counts.
+        self._true_pos_by_req: dict[str, int] = {}
+
+    def observe_step(
+        self, req_ids: list[str], sampled_token_ids: list[list[int]]
+    ) -> None:
+        """Advance each request's tracked position by this step's accepted count.
+
+        Must be called exactly once per decode step for every request, even on
+        steps where propose() itself doesn't run (e.g. the drafter-capacity
+        gate in _maybe_propose_async_draft_token_ids /
+        model_runner.py's propose_drafts_after_bookkeeping skips the real
+        proposal) -- otherwise the tracker would silently lag behind the
+        request's true output length. This mirrors upstream's GPU
+        dummy-draft-injection precedent (gpu_model_runner.py, zeroed-draft
+        fallback when input doesn't fit the drafter's context), which also
+        keeps position bookkeeping alive on a skipped step rather than
+        letting it desync.
+        """
+        for req_id, accepted in zip(req_ids, sampled_token_ids, strict=False):
+            if req_id in self._true_pos_by_req:
+                self._true_pos_by_req[req_id] += len(accepted)
+        self._true_pos_by_req = {
+            r: p for r, p in self._true_pos_by_req.items() if r in req_ids
+        }
 
     def load_model(self) -> None:
         logger.info(
@@ -171,11 +209,33 @@ class QaicDraftModelProposer:
                 current_token_ids[i] = toks[-1]
 
         # current_positions[i] = position of the accepted token being fed as the
-        # first decode input. After bookkeeping, num_tokens_no_spec[i] includes the
-        # accepted token, so its position is num_tokens_no_spec[i] - 1.
-        current_positions = (
-            input_batch.num_tokens_no_spec[:num_reqs].copy().astype(np.int64) - 1
+        # first decode input. Naively this is num_tokens_no_spec[i] - 1 (after
+        # bookkeeping, num_tokens_no_spec[i] includes the accepted token). But
+        # num_tokens_no_spec drifts by up to num_spec_tokens under async
+        # scheduling (GPUModelRunner._update_states optimistically inflates
+        # output_token_ids by K every step, then reconciles it backward against
+        # the scheduler's own, possibly-lagging, output-token count -- see
+        # docs/qaic/async_scheduling_spec_decode_findings.md, Follow-up 3). That
+        # makes num_tokens_no_spec unreliable as a position source on every step
+        # except a request's first decode step (new_req_indices, below), where
+        # req_state.prev_num_draft_len is still 0 and the drift mechanism hasn't
+        # engaged yet. So: seed from num_tokens_no_spec only on that first step,
+        # then track position ourselves from here on by summing real
+        # accepted-token counts (observe_step(), called every step including
+        # ones where propose() itself is skipped by the drafter-capacity gate).
+        new_req_index_set = set(new_req_indices)
+        num_tokens_no_spec_positions = (
+            input_batch.num_tokens_no_spec[:num_reqs].astype(np.int64) - 1
         )
+        current_positions = num_tokens_no_spec_positions.copy()
+        for i in range(num_reqs):
+            if not in_decode_phase[i]:
+                continue
+            req_id = req_ids[i]
+            if i in new_req_index_set or req_id not in self._true_pos_by_req:
+                self._true_pos_by_req[req_id] = int(num_tokens_no_spec_positions[i])
+            else:
+                current_positions[i] = self._true_pos_by_req[req_id]
 
         # KV cache catch-up: when all num_spec_tokens were accepted in the previous
         # verification step, the target model wrote KV for the last draft token at
