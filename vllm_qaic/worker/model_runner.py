@@ -415,6 +415,12 @@ class QaicModelRunnerAoT(GPUModelRunner):
         | QaicDFlashProposer
         | None
     )
+    # Declared here because GPUModelRunner.__init__ sets this dynamically
+    # (from SchedulerConfig.async_scheduling), so mypy cannot infer its type
+    # in this subclass without a re-declaration; by the time __init__ below
+    # reaches super().__init__(), VllmConfig.__post_init__ has already
+    # normalized it from `bool | None` to a concrete `bool`.
+    use_async_scheduling: bool
 
     def __init__(
         self,
@@ -529,7 +535,8 @@ class QaicModelRunnerAoT(GPUModelRunner):
         _method = self.speculative_config.method if self.speculative_config else None
         self.decode_ks: list[int] = (
             [0, self.num_spec_tokens]
-            if _method in ("ngram", "suffix") and self.max_decode_tokens > 1
+            if _method in ("ngram", "suffix", "draft_model")
+            and self.max_decode_tokens > 1
             else [self.num_spec_tokens]
         )
         # DFlash public num_speculative_tokens already excludes the slot-0 bonus
@@ -716,8 +723,13 @@ class QaicModelRunnerAoT(GPUModelRunner):
         decode request has proposals for this step; select max_k otherwise.
         With single-spec: always returns the sole K (no-op).
         """
-        if len(self.decode_ks) <= 1 or self.num_decodes == 0:
+        if len(self.decode_ks) <= 1:
             return self.decode_ks[-1]
+        if self.num_decodes == 0:
+            # kv_consumer first disagg step: the sequence is classified as
+            # prefill by the batch reorder (num_computed < num_prompt), but the
+            # decode QPC must run with k=0 because no draft proposals exist yet.
+            return 0
         spec_tokens = scheduler_output.scheduled_spec_decode_tokens
         if spec_tokens and any(len(v) > 0 for v in spec_tokens.values()):
             return self.decode_ks[-1]  # proposals exist → full SpD kernel
@@ -818,7 +830,25 @@ class QaicModelRunnerAoT(GPUModelRunner):
             ]
             # Pad decode requests to active_k+1 tokens (1 for K=0 fallback,
             # max_decode_tokens for the full SpD kernel).
-            num_scheduled_tokens[: self.num_decodes] = self.active_k + 1
+            #
+            # On the kv_consumer, a request on its first step (the last prompt
+            # token, handed off from the producer) is classified "prefill" by
+            # reorder_batch_to_split_decodes_and_prefills (num_computed <
+            # num_prompt) yet is still executed through the decode QPC. Those
+            # tail requests must be padded too, otherwise the decode compute
+            # input is a heterogeneous mix of mdt-token and 1-token rows, which
+            # breaks _run_decode's uniform (num_reqs, mdt) reshape (suffix
+            # crash) and misassociates logits to requests depending on batch
+            # order (ngram order-dependence). A padded first-step request is
+            # structurally identical to a mid-generation decode request with 0
+            # proposals: 1 real token + (mdt-1) -1 pads, masked back to one
+            # logit via signal_num_scheduled_tokens above. num_scheduled == 1 on
+            # the first consumer step is guaranteed by the KV connector
+            # (get_num_new_matched_tokens returns num_prompt_tokens - 1), so the
+            # real token always fits in one mdt row. See
+            # docs/qaic/disagg_spd_port.md.
+            num_pad_reqs = num_reqs if self.is_kv_consumer else self.num_decodes
+            num_scheduled_tokens[:num_pad_reqs] = self.active_k + 1
             total_num_scheduled_tokens = np.sum(num_scheduled_tokens)
 
         # Get request indices.
@@ -1377,6 +1407,7 @@ class QaicModelRunnerAoT(GPUModelRunner):
                     kv_connector_output,
                 )
             else:
+                assert pending_prefill_exec_queue is not None
                 async_output = QaicAsyncPoolingModelRunnerOutput(
                     model_runner=self,
                     pending_prefill_exec_queue=pending_prefill_exec_queue,
@@ -1659,13 +1690,32 @@ class QaicModelRunnerAoT(GPUModelRunner):
         time_before_load = time.perf_counter()
         from vllm_qaic.model_loader.qaic import load_qaic_model
 
+        _has_draft_model = (
+            self.speculative_config is not None
+            and self.speculative_config.uses_draft_model()
+            and self.drafter is not None
+        )
         with set_current_vllm_config(self.vllm_config):
             speculative_model_type = "default"
             if self.num_spec_tokens:
                 speculative_model_type = "target"
+            # When a draft model is present, defer the compile-only early
+            # exit until the drafter has also compiled (see
+            # QaicDraftModelProposer.load_model() below) -- otherwise the
+            # process exits after the target compiles and the draft's QPC
+            # never gets built.
             self.model: nn.Module = load_qaic_model(
-                self.vllm_config, speculative_model_type
+                self.vllm_config,
+                speculative_model_type,
+                raise_on_compile_complete=not _has_draft_model,
             )
+            # Sync decode_ks from the loaded model: _decode_ks_from_session()
+            # corrects it to the QPC's actual specializations (e.g. [0] for a
+            # seq_len=1-only QPC, or [0, K] for a multi-spec QPC).  Without this
+            # sync the runner may hold stale init-time values that differ from
+            # what the model's _run_decode buffers support.
+            self.decode_ks = list(self.model.decode_ks)  # type: ignore[arg-type]
+            self.active_k = self.decode_ks[-1]
             # FIXME load_lora_model parameters have changed in the mixin
             if self.lora_config:
                 self.model = self.load_lora_model(
@@ -1686,11 +1736,7 @@ class QaicModelRunnerAoT(GPUModelRunner):
                 "QaicLMCacheConnectorV1 currently does not support"
                 " models with hybrid KV cache"
             )
-        if (
-            self.speculative_config is not None
-            and self.speculative_config.uses_draft_model()
-            and self.drafter is not None
-        ):
+        if _has_draft_model and self.drafter is not None:
             self.drafter.load_model()
         elif (
             self.speculative_config is not None
