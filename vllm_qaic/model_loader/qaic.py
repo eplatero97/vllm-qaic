@@ -177,7 +177,8 @@ class QaicCausalLM(nn.Module, SupportsLoRA):
         )
         self.decode_ks: list[int] = (
             [0, self.num_spec_tokens]
-            if _method in ("ngram", "suffix") and self.num_spec_tokens > 0
+            if _method in ("ngram", "suffix", "draft_model")
+            and self.num_spec_tokens > 0
             else [self.num_spec_tokens]
         )
         # DFlash public num_speculative_tokens already excludes the slot-0 bonus
@@ -194,15 +195,7 @@ class QaicCausalLM(nn.Module, SupportsLoRA):
         # static input shape for hardware dispatch.
         self.decode_batch_inputs_by_k: dict[int, dict] = {}
         for _k in self.decode_ks:
-            _mdt = _k + 1
-            _d: dict = {
-                "input_ids": np.full((self.decode_bsz, _mdt), -1, dtype=np.int64),
-                "position_ids": np.full((self.decode_bsz, _mdt), -1, dtype=np.int64),
-                "batch_index": np.full((self.decode_bsz, 1), -1, dtype=np.int64),
-            }
-            if self.lora_mode:
-                _d["lora_ids"] = np.full((self.decode_bsz, 1), -1, dtype=np.int64)
-            self.decode_batch_inputs_by_k[_k] = _d
+            self.decode_batch_inputs_by_k[_k] = self._make_decode_batch_input_for_k(_k)
 
         # Backward-compat alias pointing at the max-K input dict.
         self.decode_batch_inputs = self.decode_batch_inputs_by_k[self.decode_ks[-1]]
@@ -454,23 +447,9 @@ class QaicCausalLM(nn.Module, SupportsLoRA):
             # updated) decode_ks — _run_decode indexes it by current_k.
             for _k in self.decode_ks:
                 if _k not in self.decode_batch_inputs_by_k:
-                    _mdt = _k + 1
-                    _d: dict = {
-                        "input_ids": np.full(
-                            (self.decode_bsz, _mdt), -1, dtype=np.int64
-                        ),
-                        "position_ids": np.full(
-                            (self.decode_bsz, _mdt), -1, dtype=np.int64
-                        ),
-                        "batch_index": np.full(
-                            (self.decode_bsz, 1), -1, dtype=np.int64
-                        ),
-                    }
-                    if self.lora_mode:
-                        _d["lora_ids"] = np.full(
-                            (self.decode_bsz, 1), -1, dtype=np.int64
-                        )
-                    self.decode_batch_inputs_by_k[_k] = _d
+                    self.decode_batch_inputs_by_k[_k] = (
+                        self._make_decode_batch_input_for_k(_k)
+                    )
 
             # Pre-allocate per-K logit output buffers.
             self.decode_logits_by_k: dict[int, dict] = {}
@@ -578,8 +557,8 @@ class QaicCausalLM(nn.Module, SupportsLoRA):
                 _ = self.session.set_data_for_kv_handoff(
                     kv_caches[bidx],
                     [("batch_index", bidx), ("ctx_start", 0)],
-                    self.decode_execObj_idx,
                     self.session.decode_buff_map,
+                    self.decode_execObj_idx or 0,
                 )
         return
 
@@ -869,6 +848,50 @@ class QaicCausalLM(nn.Module, SupportsLoRA):
 
         return
 
+    def _make_decode_batch_input_for_k(self, k: int, *, dummy: bool = False) -> dict:
+        """Single source of truth for a per-K decode input dict (2nd dim mdt = k+1).
+
+        ``dummy=False`` (runtime: ``__init__`` / ``load_model``) fills -1
+        sentinels.  ``dummy=True`` (``disagg_dummy_run``) fills validator-friendly
+        values plus any multimodal kwargs.  Each call returns a fresh dict with
+        independent numpy arrays — ``_run_decode`` mutates these in place per
+        step, so the per-K dicts MUST NOT be aliased.
+
+        Add any future decode input key (e.g. on-device sampling buffers) here
+        so all three construction sites stay in sync.
+        """
+        mdt = k + 1
+        d: dict = {
+            "input_ids": (
+                np.zeros((self.decode_bsz, mdt), dtype=np.int64)
+                if dummy
+                else np.full((self.decode_bsz, mdt), -1, dtype=np.int64)
+            ),
+            "position_ids": np.full((self.decode_bsz, mdt), -1, dtype=np.int64),
+        }
+        # In dummy mode batch_index is included only when the QPC binds it; the
+        # runtime path always allocates it (session not yet loaded). These are
+        # equivalent: ignore_batch_index is set from "batch_index" in
+        # session.input_names, the same condition the dummy path used before.
+        include_batch_index = (
+            (not getattr(self, "ignore_batch_index", False)) if dummy else True
+        )
+        if include_batch_index:
+            d["batch_index"] = (
+                np.arange(self.decode_bsz, dtype=np.int64).reshape(-1, 1)
+                if dummy
+                else np.full((self.decode_bsz, 1), -1, dtype=np.int64)
+            )
+        if self.lora_mode:
+            d["lora_ids"] = (
+                np.arange(self.decode_bsz, dtype=np.int64).reshape(-1, 1)
+                if dummy
+                else np.full((self.decode_bsz, 1), -1, dtype=np.int64)
+            )
+        if dummy and getattr(self, "default_mm_kwargs", None):
+            d.update(self.default_mm_kwargs)  # type: ignore[arg-type]
+        return d
+
     def _run_decode(
         self,
         input_ids: np.ndarray,
@@ -884,6 +907,17 @@ class QaicCausalLM(nn.Module, SupportsLoRA):
         current_k = self.active_k
         mdt = current_k + 1  # tokens per decode request for this step
         num_tokens = input_ids.shape[0]
+        # Every executed decode request must contribute exactly mdt tokens for
+        # the fixed-shape (decode_bsz, mdt) QPC reshape below. On the disagg
+        # kv_consumer, first-step requests must be padded to mdt upstream
+        # (_prepare_qaic_inputs); a heterogeneous mix here silently corrupts the
+        # token->request / logit->request mapping (ngram order-dependence) or
+        # fails the reshape outright (suffix). Fail loudly instead.
+        assert num_tokens % mdt == 0, (
+            f"decode input has {num_tokens} tokens, not a multiple of "
+            f"mdt={mdt} (active_k={current_k}); decode batch is not uniformly "
+            "padded — see docs/qaic/disagg_spd_port.md"
+        )
         num_decodes = num_tokens // mdt  # number of decode requests
         batch_inputs = self.decode_batch_inputs_by_k[current_k]
         batch_inputs["input_ids"][:num_decodes] = input_ids.reshape(num_decodes, mdt)
@@ -1240,11 +1274,17 @@ class QaicCausalLM(nn.Module, SupportsLoRA):
             # added to decode_batch_inputs before this dict was replaced.
             if getattr(self, "default_mm_kwargs", None):
                 self.decode_batch_inputs.update(self.default_mm_kwargs)
-            # Keep decode_batch_inputs_by_k in sync: _run_decode reads from this
-            # map, so it must point at the rebuilt dict that carries the correct
-            # (MRoPE-aware) position_ids / batch_index / mm-kwargs shapes.
-            for _k in self.decode_batch_inputs_by_k:
-                self.decode_batch_inputs_by_k[_k] = self.decode_batch_inputs
+            # Rebuild per-K dicts with correct shapes for hardware specialization
+            # selection.
+            # NOTE: MRoPE and SpD are mutually exclusive
+            # (DraftModelRunner._raise_if_mrope), so position_ids is always
+            # (bsz, mdt), never (4, bsz, mdt).
+            for _k in list(self.decode_batch_inputs_by_k.keys()):
+                self.decode_batch_inputs_by_k[_k] = self._make_decode_batch_input_for_k(
+                    _k, dummy=True
+                )
+            # Backward-compat alias pointing at max-K dict.
+            self.decode_batch_inputs = self.decode_batch_inputs_by_k[self.decode_ks[-1]]
         # TODO: Clean up
         # self._input_map_chg_needed = "decoder_input_ids" in self.session.input_names
         # # This is a hack for mapping names to qpc input,
@@ -1316,20 +1356,14 @@ class QaicCausalLM(nn.Module, SupportsLoRA):
                 logger.info("Finished dummy prefill run")
             if self.session.cluster_id == "decode":
                 logger.info("Running dummy decode run with bsz %s", self.decode_bsz)
-                bidx = 0
-                input_kv_buffers: dict[str, Any] = {}
                 KvCache_buff = []
                 for kv_shape, kv_type, _ in self.kv_cache_info:
-                    _kv_shape = (self.decode_bsz,) + kv_shape[1:]
                     KvCache_buff.append(np.empty(shape=kv_shape, dtype=kv_type))
 
                 decode_logits_shape = (
-                    (self.decode_bsz, 1, self.vocab_size)
+                    (self.decode_bsz, self.max_decode_tokens, self.vocab_size)
                     if self.logits_ndim == 3
                     else (self.decode_bsz, self.vocab_size)
-                )
-                self.session.create_output_buffers(
-                    input_kv_buffers, decode_logits_shape, self.logits_dtype
                 )
                 # Pre-allocate logits buffer into every decode_batch_inputs_by_k
                 # entry so _run_decode can reuse it for all K values. The decode
@@ -1346,18 +1380,29 @@ class QaicCausalLM(nn.Module, SupportsLoRA):
                     self.decode_batch_inputs["comp_ctx_lengths"] = np.zeros(
                         self.comp_ctx_lengths_decode[-1], dtype=np.int64
                     )
+                # For spec-decode target models, _run_decode always merges
+                # num_logits_to_keep into batch_inputs before np_run (see
+                # _run_decode above); the dummy run must do the same or the
+                # committed input_ids/position_ids specialization shape (mdt)
+                # is left paired with a stale/missing num_logits_to_keep,
+                # which the QPC's dynamic-binding validator rejects.
+                if self.is_spec_decode_target_model:
+                    self.decode_batch_inputs.update(
+                        self.decode_num_logits_buffer_by_k[self.active_k]
+                    )
+                # setDataWithSlices registers the ENTIRE KV-cache buffer table in
+                # one call, starting at batch_index=0 — it is NOT a per-batch-index
+                # slice — so no loop over decode slots is needed here.
                 _ = self.session.set_data_for_kv_handoff(
                     KvCache_buff,
-                    [("batch_index", bidx), ("ctx_start", 0)],
-                    self.decode_execObj_idx,
+                    [("batch_index", 0), ("ctx_start", 0)],
                     self.session.decode_buff_map,
+                    self.decode_execObj_idx,
                 )
-                bidx += 1
                 exec_obj_idx = self.session.np_run(
                     self.decode_batch_inputs, is_prefill=False
                 )
                 self.session.complete_inf(exec_obj_idx, is_prefill=False)
-                # self.decode_batch_inputs = decode_batch_inputs_temp
                 logger.info("Finished dummy decode run with bsz %s", self.decode_bsz)
             logger.debug("finished dummy run")
 
@@ -1416,7 +1461,9 @@ def _derive_dflash_config(vllm_config) -> None:
 
 
 def load_qaic_model(
-    vllm_config: VllmConfig, speculative_model_type: str | None = None
+    vllm_config: VllmConfig,
+    speculative_model_type: str | None = None,
+    raise_on_compile_complete: bool = True,
 ) -> nn.Module:
     # DFlash: derive cross-checkpoint config before the draft build
     # clears speculative_config.
@@ -1433,6 +1480,9 @@ def load_qaic_model(
 
         vllm_config = copy(vllm_config)
         vllm_config.speculative_config = None
+        # Draft model has its own KV cache on separate devices and must NOT
+        # participate in KV transfer between prefill/decode servers.
+        vllm_config.kv_transfer_config = None
 
     # Create a model instance
     if vllm_config.model_config.is_multimodal_model:
@@ -1457,7 +1507,7 @@ def load_qaic_model(
         )
 
     qaic_compile_config = _get_qaic_compile_config(vllm_config, speculative_model_type)
-    qpc_path = qaic_compile_config.qpc_path
+    qpc_path: str | None = qaic_compile_config.qpc_path
 
     # set lora max adapters
     if vllm_config.lora_config:
@@ -1477,8 +1527,8 @@ def load_qaic_model(
             "pooling_device", None
         ) == "qaic" and override_qaic_config.get("task") not in ("score", "classify"):
             assert override_qaic_config.get("pooling_method"), (
-                "pooling_method must be provided in override_qaic_config for qaic"
-                "pooling task"
+                "pooling_method must be provided in override_qaic_config"
+                " for qaic pooling task"
             )
 
     # if provided qpc is valid
@@ -1677,11 +1727,20 @@ def load_qaic_model(
     logger.info("Using qpc:-%s", qpc_path)
 
     if qaic_compile_config.compile_only:
-        # Hack for Model-IP execution flow
-        # TODO: remove this in future
-        # This will create error in parent process if exited,
-        # need better solution in future
-        raise QaicCompilationComplete()
+        if raise_on_compile_complete:
+            # Hack for Model-IP execution flow
+            # TODO: remove this in future
+            # This will create error in parent process if exited,
+            # need better solution in future
+            raise QaicCompilationComplete()
+        # Caller (target load path with a draft model still to compile)
+        # will proceed to compile the drafter before exiting via its own
+        # load_qaic_model() call. model.load_model() (which sets
+        # disagg_serving_en) never runs on this path, so set a safe default
+        # for the caller's immediate post-load disagg_serving_en/kv_cache_info
+        # checks.
+        model.disagg_serving_en = False
+        return model.eval()
 
     # Load the weights from the cached or downloaded files.
     # model_config.qpc in None
@@ -2021,6 +2080,14 @@ def _get_qaic_compile_config(
     cfg.update(_clean_config(override_qaic_config, vllm_config))
     # update through environment variable
     cfg.update(_clean_config(QAIC_DEVICE_CONFIG[speculative_model_type]))
+    if speculative_model_type == "draft":
+        # The draft model is never disaggregated: it always runs its own
+        # prefill inline (see qaic_draft_model.py's propose()), so it needs
+        # both Prefill and Decode specializations compiled. Undo any
+        # prefill_only=False inherited from the decode instance's shared
+        # override_qaic_config, which is only correct for the disaggregated
+        # target (whose prefill runs on a separate prefill server).
+        cfg["prefill_only"] = prefill_only
     # set aic num core as per the hw if not provided
     if cfg["num_cores"] is None:
         _hw_num_cores = 16
@@ -2108,7 +2175,12 @@ def _get_qaic_compile_config(
             cfg["num_speculative_tokens"] = K
             cfg["dflash_block_size"] = K + 1
             num_logits_to_keep = K + 1
-        elif spec_cfg and spec_cfg.method in ("ngram", "suffix") and K:
+        # For ngram/suffix/draft_model, compile two decode specializations: K=0
+        # (fallback, no proposals) and K=max (full SpD).  For ngram/suffix, K=0
+        # is used on steps where the proposer finds no matches.  For draft_model,
+        # K=0 is needed on the first disaggregated consumer step where the sequence
+        # arrives as a single token (last prompt token) with no draft proposals yet.
+        elif spec_cfg and spec_cfg.method in ("ngram", "suffix", "draft_model") and K:
             cfg["num_speculative_tokens"] = [0, K]
             num_logits_to_keep = K + 1
         else:
@@ -2269,6 +2341,30 @@ def _get_qaic_compile_config(
         from .qaic_session_np import VLLM_KV_CACHE_PREFIX
 
         cfg["kv_cache_prefix"] = VLLM_KV_CACHE_PREFIX
+        # Prefill and decode roles must compile with identical KV-cache head
+        # counts so the shared-memory KV handoff sizes match. qaic_disagg's
+        # prefill subprocess never receives --speculative-config, so
+        # speculative_model_type stays "default" for prefill even when
+        # decode is "target" for SpD -- which otherwise leaves qaic_config
+        # None for prefill and non-None for decode, asymmetrically gating
+        # QEfficient's ReplicateKVHeadTransform (e.g. 8->32 KV heads on
+        # decode only for Llama-3.1-8B GQA). Pin the same value on both
+        # roles unconditionally in disagg mode, using num_devices=1 which is
+        # topology-insensitive (calculate_num_replicate_kv_heads returns
+        # max_repeat for num_devices=1 regardless of actual device count).
+        from QEfficient.utils.config_utils import calculate_num_replicate_kv_heads
+
+        if qaic_config is None:
+            qaic_config = {}
+        text_config = vllm_config.model_config.hf_config
+        text_config = getattr(text_config, "get_text_config", lambda: text_config)()
+        qaic_config.setdefault(
+            "num_replicate_kv_heads",
+            calculate_num_replicate_kv_heads(
+                num_devices=1,
+                text_model_config=text_config,
+            ),
+        )
     print(cfg)
     device_group = cfg.pop("device_group")
     if "io_encrypt" in cfg:
