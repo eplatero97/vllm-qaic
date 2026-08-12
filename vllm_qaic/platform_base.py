@@ -71,11 +71,6 @@ class QaicPlatform(Platform):
 
     @classmethod
     def import_kernels(cls) -> None:
-        # QAIC has no CUDA kernels. Skip all kernel imports — importing vllm._C
-        # on non-CUDA hardware triggers a C++ bad_alloc/terminate (SIGABRT), which
-        # Python's except ImportError cannot catch. vllm._moe_C is also skipped
-        # since QAIC uses its own on-chip operators, not CUDA MoE kernels.
-        # TODO: import Hexagon/QAIC-specific .so here when available.
         pass
 
     @classmethod
