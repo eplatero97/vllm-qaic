@@ -221,9 +221,17 @@ class QaicWorkerPyt(QaicWorker):
         from vllm_qaic.v1.sample.topk_topp_sampler_shim import (
             install as install_topk_topp_shim,
         )
+        from vllm_qaic.v1.spec_decode.input_shim import (
+            install as install_spec_decode_input_shim,
+        )
+        from vllm_qaic.v1.worker.kv_cache_shim import (
+            install as install_kv_cache_shim,
+        )
 
         install_rejection_sampler_shim()
         install_topk_topp_shim()
+        install_spec_decode_input_shim()
+        install_kv_cache_shim()
 
     def annotate_profile(self, scheduler_output):
         # adapted from v1/worker/gpu_worker.py

@@ -357,11 +357,46 @@ class QaicModelRunnerPyt(GPUModelRunner):
                 builder = attn_group.get_metadata_builder()
                 if hasattr(builder, "update_req_ids"):
                     builder.update_req_ids(req_ids)
+        drafter = getattr(self, "drafter", None)
+        for attn_group in getattr(drafter, "draft_attn_groups", ()):
+            builder = attn_group.get_metadata_builder()
+            if hasattr(builder, "update_req_ids"):
+                builder.update_req_ids(req_ids)
         return super()._prepare_inputs(scheduler_output, num_scheduled_tokens)
 
     def _sync_device(self) -> None:
         if not isinstance(qaic, PlaceholderModule):
             qaic.synchronize()
+
+    def _copy_draft_token_ids_to_cpu(
+        self, scheduler_output: SchedulerOutput, zeros_only: bool = False
+    ) -> None:
+        if self.use_async_scheduling and not (
+            scheduler_output.has_structured_output_requests
+            or self.input_batch.sampling_metadata.output_token_ids
+        ):
+            return
+
+        self._draft_token_req_ids = self.input_batch.req_ids.copy()
+        draft_token_ids = self._draft_token_ids
+        if not torch.is_tensor(draft_token_ids):
+            return
+
+        assert self.draft_token_ids_cpu is not None
+        num_reqs = draft_token_ids.shape[0]
+        if zeros_only:
+            self.draft_token_ids_cpu[:num_reqs] = 0
+        else:
+            self.draft_token_ids_cpu[:num_reqs].copy_(draft_token_ids.cpu())
+
+    def _get_draft_token_ids_cpu(self) -> tuple[list[list[int]], list[str]]:
+        if isinstance(self._draft_token_ids, list):
+            return self._draft_token_ids, self.input_batch.req_ids
+        req_ids = self._draft_token_req_ids
+        if req_ids is None:
+            return [], []
+        assert self.draft_token_ids_cpu is not None
+        return self.draft_token_ids_cpu[: len(req_ids)].tolist(), req_ids
 
     @torch.inference_mode()
     def execute_model(
