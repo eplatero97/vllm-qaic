@@ -443,24 +443,37 @@ class QAicAttentionBackendImpl(AttentionImpl):
             Lq = num_new
             Lk = new_cached
 
-            # Decode (Lq=1): full KV context, no mask needed.
-            # Prefill / chunked-prefill: causal mask over [Lq x Lk].
-            if Lq == 1:
-                mask = None
+            if Lq > 1 and write_start > 0:
+                per_token_outputs = []
+                for token_offset in range(Lq):
+                    token_k = k[:, : write_start + token_offset + 1]
+                    token_v = v[:, : write_start + token_offset + 1]
+                    token_output = torch.nn.functional.scaled_dot_product_attention(
+                        q[None, :, token_offset : token_offset + 1, :],
+                        token_k[None],
+                        token_v[None],
+                        attn_mask=None,
+                        dropout_p=0.0,
+                        is_causal=False,
+                        scale=self.scale,
+                    )
+                    per_token_outputs.append(token_output)
+                sdpa_out = torch.cat(per_token_outputs, dim=2)
             else:
-                mask = torch.ones(Lq, Lk, device=q.device, dtype=torch.bool).tril(
-                    diagonal=(Lk - Lq)
+                mask = None
+                if Lq > 1:
+                    mask = torch.ones(Lq, Lk, device=q.device, dtype=torch.bool).tril(
+                        diagonal=(Lk - Lq)
+                    )
+                sdpa_out = torch.nn.functional.scaled_dot_product_attention(
+                    q[None],
+                    k[None],
+                    v[None],
+                    attn_mask=mask,
+                    dropout_p=0.0,
+                    is_causal=False,
+                    scale=self.scale,
                 )
-            # breakpoint()
-            sdpa_out = torch.nn.functional.scaled_dot_product_attention(
-                q[None],  # [1, num_heads, Lq, head_size]
-                k[None],
-                v[None],
-                attn_mask=mask,
-                dropout_p=0.0,
-                is_causal=False,
-                scale=self.scale,
-            )  # [1, num_heads, Lq, head_size]
 
             output[tok_start:tok_end] = sdpa_out.squeeze(0).movedim(1, 0)
 
