@@ -2,7 +2,7 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 # ------------------------------------------------------------------
-"""Behavior-level unit tests for disaggregated speculative decoding."""
+"""Device-independent behavior tests for disaggregated speculative decoding."""
 
 from contextlib import nullcontext
 import json
@@ -30,6 +30,7 @@ def runner_config():
             speculative_config.draft_model_config = MagicMock()
             speculative_config.num_speculative_tokens = num_speculative_tokens
             speculative_config.uses_draft_model.return_value = method == "draft_model"
+            speculative_config.use_dflash.return_value = method == "dflash"
         kv_transfer_config = None
         if role is not None:
             kv_transfer_config = SimpleNamespace(kv_role=role)
