@@ -684,6 +684,13 @@ class QaicWorkerAoT(QaicWorker):
 
         self._configure_thread_parallelism()
 
+        # Host-side sampler kernels.  Both run in this (EngineCore) process;
+        # installing them in the frontend would have no effect.
+        from vllm_qaic.v1.sample import rejection_sampler_numba, topk_topp_sampler_shim
+
+        topk_topp_sampler_shim.install()
+        rejection_sampler_numba.install()
+
         # Construct the model runner
         self.model_runner: QaicModelRunnerAoT = QaicModelRunnerAoT(
             self.vllm_config, self.device
@@ -694,6 +701,9 @@ class QaicWorkerAoT(QaicWorker):
         self.model_runner.load_model()
 
     def compile_or_warm_up_model(self) -> CompilationTimes:
+        from vllm_qaic.v1.sample import rejection_sampler_numba
+
+        rejection_sampler_numba.prewarm()
         self.model_runner._qaic_dummy_run()
         return CompilationTimes(language_model=0.0, encoder=0.0)
 

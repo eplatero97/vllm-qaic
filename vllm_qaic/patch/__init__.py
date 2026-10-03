@@ -44,11 +44,12 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   1. vllm.v1.sample.rejection_sampler.RejectionSampler.forward
 #    Why:
-#       Skip unnecessary tensor clone and softmax in the greedy-sampling
-#       path of the rejection sampler.  For greedy requests with no logprobs,
-#       (a) the clone before apply_logits_processors is not needed because
-#       raw_target_logits is never read again, and (b) softmax can be skipped
-#       because argmax(logits) == argmax(softmax(logits)).
+#       Skip an unnecessary tensor clone in the greedy-sampling path of the
+#       rejection sampler.  For greedy requests with no logprobs, the clone
+#       before apply_logits_processors is not needed because
+#       raw_target_logits is never read again.  Everything else (logits, not
+#       probs, passed to rejection_sample; synthetic/fp64-gumbel options)
+#       mirrors upstream.
 #    How:
 #       Replace RejectionSampler.forward with a QAIC-optimized version.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
