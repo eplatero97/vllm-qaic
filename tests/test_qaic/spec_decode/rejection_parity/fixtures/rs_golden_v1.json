@@ -1,0 +1,1067 @@
+{
+ "cases": [
+  {
+   "dump_impl": "numba",
+   "grid": [
+    4
+   ],
+   "kernel": "expand_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "MAX_NUM_TOKENS": 128
+   },
+   "name": "dump:expand:MAX_NUM_TOKENS=128|float32,float32,int32,s,s|",
+   "ref": "triton",
+   "sanitized": [],
+   "sha256": "f58a3bd3683b67256135c5c6955af0a2b10bb005e2c34bcbe468ed565bd68f1a",
+   "source": "e2e_dump:gs_FP64_ngram_mns4_numba/3950421_00001_expand_kernel_000.pt",
+   "tags": [
+    "real"
+   ]
+  },
+  {
+   "dump_impl": "numba",
+   "grid": [
+    4
+   ],
+   "kernel": "expand_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "MAX_NUM_TOKENS": 128
+   },
+   "name": "dump:expand:MAX_NUM_TOKENS=128|int32,int32,int32,s,s|",
+   "ref": "triton",
+   "sanitized": [],
+   "sha256": "5c1d2ecd41c0c41593fd2a77c1a16f02c8f834fb9c3c20dce4b48eefe03993c1",
+   "source": "e2e_dump:gs_RK_ngram_mns4_numba/3935171_00002_expand_kernel_000.pt",
+   "tags": [
+    "real"
+   ]
+  },
+  {
+   "dump_impl": "numba",
+   "grid": [
+    1
+   ],
+   "kernel": "rejection_greedy_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "SYNTHETIC_MODE": false
+   },
+   "name": "dump:rejection_greedy_sample:SYNTHETIC_MODE=False|int32,int32,int64,int64,int32,None,s,None,None|none",
+   "ref": "triton",
+   "sanitized": [],
+   "sha256": "c5e6bf2fc7c83085a30745ee8bc6dd4247908667972d95cd7d3413839b42b331",
+   "source": "e2e_dump:G_suffix_mns1_numba/3986328_00001_rejection_greedy_sample_kernel_000.pt",
+   "tags": [
+    "SYNTHETIC_MODE=0",
+    "real"
+   ]
+  },
+  {
+   "dump_impl": "numba",
+   "grid": [
+    4
+   ],
+   "kernel": "rejection_greedy_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "SYNTHETIC_MODE": false
+   },
+   "name": "dump:rejection_greedy_sample:SYNTHETIC_MODE=False|int32,int32,int64,int64,int32,bool,s,float64,None|tensor",
+   "ref": "triton",
+   "sanitized": [],
+   "sha256": "d972a6384aaebc1129d4ba4cea3746782e059e338dda527013852052f5a598ea",
+   "source": "e2e_dump:gs_M_suffix_mns4_numba/3928769_00002_rejection_greedy_sample_kernel_000.pt",
+   "tags": [
+    "SYNTHETIC_MODE=0",
+    "real"
+   ]
+  },
+  {
+   "dump_impl": "numba",
+   "grid": [
+    1
+   ],
+   "kernel": "rejection_random_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "SYNTHETIC_MODE": false
+   },
+   "name": "dump:rejection_random_sample:NO_DRAFT_PROBS=True,SYNTHETIC_MODE=False|int32,int32,int64,None,float32,int32,int64,float64,bool,s,s,None|",
+   "ref": "triton",
+   "sanitized": [
+    "arg4 entries other than [t, draft[t]] zeroed (never read)"
+   ],
+   "sha256": "00b304a9d1933047f2b46c8f58fcb6fe686f8f0f39757d0096942e075da9c936",
+   "source": "e2e_dump:gs_R_suffix_mns1_numba/3997884_00003_rejection_random_sample_kernel_000.pt",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "SYNTHETIC_MODE=0",
+    "real"
+   ]
+  },
+  {
+   "dump_impl": "numba",
+   "grid": [
+    4
+   ],
+   "kernel": "rejection_random_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "SYNTHETIC_MODE": true
+   },
+   "name": "dump:rejection_random_sample:NO_DRAFT_PROBS=True,SYNTHETIC_MODE=True|int32,int32,int64,None,float32,int32,int64,float64,bool,s,s,float32|",
+   "ref": "triton",
+   "sanitized": [
+    "arg4 entries other than [t, draft[t]] zeroed (never read)"
+   ],
+   "sha256": "297d47053ac6d16315aaf056bfe35c6b8989a3576f37dc7cc9421d48576a2191",
+   "source": "e2e_dump:gs_SYN_suffix_mns4_numba/3974681_00003_rejection_random_sample_kernel_000.pt",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "SYNTHETIC_MODE=1",
+    "real"
+   ]
+  },
+  {
+   "dump_impl": "numba",
+   "grid": [
+    1,
+    1
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "USE_FP64_GUMBEL": false
+   },
+   "name": "dump:sample_recovered_tokens:NO_DRAFT_PROBS=True,USE_FP64_GUMBEL=False|int64,int32,int64,None,float32,float32,s,s|",
+   "ref": "triton",
+   "sanitized": [
+    "output buffer (uninitialised empty_like) -> -7 fill"
+   ],
+   "sha256": "e01257b68fd7bfbecab95321320d0a177d9048809af61b38a4124e8af7b1ecf6",
+   "source": "e2e_dump:gs_R_suffix_mns1_numba/3997884_00002_sample_recovered_tokens_kernel_000.pt",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "USE_FP64_GUMBEL=0",
+    "real"
+   ]
+  },
+  {
+   "dump_impl": "numba",
+   "grid": [
+    4,
+    1
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "USE_FP64_GUMBEL": true
+   },
+   "name": "dump:sample_recovered_tokens:NO_DRAFT_PROBS=True,USE_FP64_GUMBEL=True|int64,int32,int64,None,float32,float64,s,s|",
+   "ref": "triton",
+   "sanitized": [
+    "output buffer (uninitialised empty_like) -> -7 fill",
+    "inv_q rows of zero-draft requests zeroed (never read)"
+   ],
+   "sha256": "c933f9d162d32bf85b6abd276dd7bfbaf266666c87aa0117fa09c0f547568f3b",
+   "source": "e2e_dump:gs_FP64_suffix_mns4_numba/3956436_00002_sample_recovered_tokens_kernel_000.pt",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "USE_FP64_GUMBEL=1",
+    "real"
+   ]
+  },
+  {
+   "grid": [
+    3,
+    2
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "USE_FP64_GUMBEL": false
+   },
+   "name": "syn:recovered:V1:nodraft1:fp640",
+   "ref": "triton",
+   "sha256": "8128b2aa9732f7dd195805486791789dfaed789f41428c81d2db08830a34ce97",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "USE_FP64_GUMBEL=0",
+    "V=1",
+    "ragged"
+   ]
+  },
+  {
+   "grid": [
+    3,
+    2
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "USE_FP64_GUMBEL": true
+   },
+   "name": "syn:recovered:V1:nodraft1:fp641",
+   "ref": "triton",
+   "sha256": "368947fcd26fcb0a236ec4b206d9935bb1fb8693eede1cd01d33cb51b45dc470",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "USE_FP64_GUMBEL=1",
+    "V=1",
+    "ragged"
+   ]
+  },
+  {
+   "grid": [
+    3,
+    2
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": false,
+    "USE_FP64_GUMBEL": false
+   },
+   "name": "syn:recovered:V1:nodraft0:fp640",
+   "ref": "triton",
+   "sha256": "ba99daac67c80bf48b8424dc041cf14d9ae5ffd306f62c984a3c7d3e48b1493b",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=0",
+    "USE_FP64_GUMBEL=0",
+    "V=1",
+    "ragged"
+   ]
+  },
+  {
+   "grid": [
+    3,
+    2
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": false,
+    "USE_FP64_GUMBEL": true
+   },
+   "name": "syn:recovered:V1:nodraft0:fp641",
+   "ref": "triton",
+   "sha256": "d5349984436b1fc3cab240189b6c5893ae5b43526e968bc7ac6c1a71c6a01a20",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=0",
+    "USE_FP64_GUMBEL=1",
+    "V=1",
+    "ragged"
+   ]
+  },
+  {
+   "grid": [
+    4,
+    3
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "USE_FP64_GUMBEL": false
+   },
+   "name": "syn:recovered:V31:nodraft1:fp640",
+   "ref": "triton",
+   "sha256": "39ebdc7092d65a9b9a8801502b3cd494410597361f8832ef3a32b3a99a9cced1",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "USE_FP64_GUMBEL=0",
+    "V=31",
+    "ragged"
+   ]
+  },
+  {
+   "grid": [
+    4,
+    3
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "USE_FP64_GUMBEL": true
+   },
+   "name": "syn:recovered:V31:nodraft1:fp641",
+   "ref": "triton",
+   "sha256": "d74430adc4a35b741532a3b3e7ae1fc2d1320f382d12a5489467d391a7678b8b",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "USE_FP64_GUMBEL=1",
+    "V=31",
+    "ragged"
+   ]
+  },
+  {
+   "grid": [
+    4,
+    3
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": false,
+    "USE_FP64_GUMBEL": false
+   },
+   "name": "syn:recovered:V31:nodraft0:fp640",
+   "ref": "triton",
+   "sha256": "6e1d534cd4ece8e6fbc162b0a4320a41e183581c1a8d208bf2aea4517861efff",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=0",
+    "USE_FP64_GUMBEL=0",
+    "V=31",
+    "ragged"
+   ]
+  },
+  {
+   "grid": [
+    4,
+    3
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": false,
+    "USE_FP64_GUMBEL": true
+   },
+   "name": "syn:recovered:V31:nodraft0:fp641",
+   "ref": "triton",
+   "sha256": "f2fc66563f3d48ac37828009b067e7576f518ab011ce2006336a01ddef720535",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=0",
+    "USE_FP64_GUMBEL=1",
+    "V=31",
+    "ragged"
+   ]
+  },
+  {
+   "grid": [
+    3,
+    3
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "USE_FP64_GUMBEL": false
+   },
+   "name": "syn:recovered:V1000:nodraft1:fp640",
+   "ref": "triton",
+   "sha256": "e009d63cc4af99a5f5ea39dc3743c5537e9891ef5317d833713d355e57c49c9e",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "USE_FP64_GUMBEL=0",
+    "V=1000",
+    "ragged"
+   ]
+  },
+  {
+   "grid": [
+    3,
+    3
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "USE_FP64_GUMBEL": true
+   },
+   "name": "syn:recovered:V1000:nodraft1:fp641",
+   "ref": "triton",
+   "sha256": "d6e7bda09de04c10182149ce4c50751c3a51a2602ffda9fb7f0ea6a1f372ba06",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "USE_FP64_GUMBEL=1",
+    "V=1000",
+    "ragged"
+   ]
+  },
+  {
+   "grid": [
+    3,
+    3
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": false,
+    "USE_FP64_GUMBEL": false
+   },
+   "name": "syn:recovered:V1000:nodraft0:fp640",
+   "ref": "triton",
+   "sha256": "ff2d1b1cb7f9898a225e66c11717f0b87f059e6f126e40021ce4ed4fc28afb85",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=0",
+    "USE_FP64_GUMBEL=0",
+    "V=1000",
+    "ragged"
+   ]
+  },
+  {
+   "grid": [
+    3,
+    3
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": false,
+    "USE_FP64_GUMBEL": true
+   },
+   "name": "syn:recovered:V1000:nodraft0:fp641",
+   "ref": "triton",
+   "sha256": "694ab27b6c58ceb8a783718a91c9ffa66da88fd9eb5523a1e10a2482a58cceb7",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=0",
+    "USE_FP64_GUMBEL=1",
+    "V=1000",
+    "ragged"
+   ]
+  },
+  {
+   "grid": [
+    3,
+    3
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": false,
+    "USE_FP64_GUMBEL": false
+   },
+   "name": "syn:recovered:V1000:score_ties",
+   "ref": "triton",
+   "sha256": "7203591b590641d19461f5f0c6b5f11298a3a53c203194f7cb0324986a932de0",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=0",
+    "V=1000",
+    "ties"
+   ]
+  },
+  {
+   "grid": [
+    2,
+    3
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "USE_FP64_GUMBEL": false
+   },
+   "name": "syn:recovered:V1000:inf_inv_q_tie:nodraft1",
+   "ref": "triton",
+   "sha256": "590112c6d5c81fcb6473212959ed180c207fd04f18bb311712f8a56771094600",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "V=1000",
+    "inf_inv_q"
+   ]
+  },
+  {
+   "grid": [
+    2,
+    3
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": false,
+    "USE_FP64_GUMBEL": false
+   },
+   "name": "syn:recovered:V1000:inf_inv_q_tie:nodraft0",
+   "ref": "triton",
+   "sha256": "e53114882022386aec95e458cfcd8704cd6ccbf2d7102d8a2f19b62027d1c5df",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=0",
+    "V=1000",
+    "inf_inv_q"
+   ]
+  },
+  {
+   "grid": [
+    4,
+    3
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "USE_FP64_GUMBEL": true
+   },
+   "name": "syn:recovered:V1000:large_inv:fp641:nodraft1",
+   "ref": "triton",
+   "sha256": "b75ff10c6a44d03f061841635129fbb182e88c66039f9b4aa3a9554c23070408",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "USE_FP64_GUMBEL=1",
+    "V=1000",
+    "large_inv"
+   ]
+  },
+  {
+   "grid": [
+    4,
+    3
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": false,
+    "USE_FP64_GUMBEL": true
+   },
+   "name": "syn:recovered:V1000:large_inv:fp641:nodraft0",
+   "ref": "triton",
+   "sha256": "cf70930f32f3b5a63098c1cae467ed4a1de544afca6cd99d8000798b197cf970",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=0",
+    "USE_FP64_GUMBEL=1",
+    "V=1000",
+    "large_inv"
+   ]
+  },
+  {
+   "grid": [
+    6
+   ],
+   "kernel": "rejection_greedy_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "SYNTHETIC_MODE": false
+   },
+   "name": "syn:greedy:V1000:mask0:syn0",
+   "ref": "triton",
+   "sha256": "3970506e370032cb538be9dda08d37065b8b1a90932d16abb75f31447a9b24f5",
+   "source": "synthetic",
+   "tags": [
+    "SYNTHETIC_MODE=0",
+    "V=1000",
+    "mask=none"
+   ]
+  },
+  {
+   "grid": [
+    6
+   ],
+   "kernel": "rejection_greedy_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "SYNTHETIC_MODE": true
+   },
+   "name": "syn:greedy:V1000:mask0:syn1",
+   "ref": "triton_int32_cast",
+   "sha256": "ffa28801f982dc2bd5674ad71a572baad8f0d1ea823a3c83c3ee7da304d0ccfc",
+   "source": "synthetic",
+   "tags": [
+    "SYNTHETIC_MODE=1",
+    "V=1000",
+    "mask=none"
+   ]
+  },
+  {
+   "grid": [
+    6
+   ],
+   "kernel": "rejection_greedy_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "SYNTHETIC_MODE": false
+   },
+   "name": "syn:greedy:V1000:mask1:syn0",
+   "ref": "triton",
+   "sha256": "67257f625d4942c8d82c44effab18d295a8b92415b53ec9a78c556fb1f6229d9",
+   "source": "synthetic",
+   "tags": [
+    "SYNTHETIC_MODE=0",
+    "V=1000",
+    "mask=tensor"
+   ]
+  },
+  {
+   "grid": [
+    6
+   ],
+   "kernel": "rejection_greedy_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "SYNTHETIC_MODE": true
+   },
+   "name": "syn:greedy:V1000:mask1:syn1",
+   "ref": "triton_int32_cast",
+   "sha256": "77bfe9017753fa32347c3e43a04728d77fb7e5d9b85d6b3b8163748776e63e17",
+   "source": "synthetic",
+   "tags": [
+    "SYNTHETIC_MODE=1",
+    "V=1000",
+    "mask=tensor"
+   ]
+  },
+  {
+   "grid": [
+    3
+   ],
+   "kernel": "rejection_greedy_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "SYNTHETIC_MODE": false
+   },
+   "name": "syn:greedy:V1:mask1:syn0",
+   "ref": "triton",
+   "sha256": "93ea0883682500f3c48fc0f72be572bcbfde528095e9c7de00c1e1a1864a41b5",
+   "source": "synthetic",
+   "tags": [
+    "V=1"
+   ]
+  },
+  {
+   "grid": [
+    2
+   ],
+   "kernel": "rejection_greedy_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "SYNTHETIC_MODE": true
+   },
+   "name": "syn:greedy:V128256ids:mask0:syn1",
+   "ref": "triton_int32_cast",
+   "sha256": "67e83c9d1478077588111242703da73708f5fe45143043bfa979f09ba8101610",
+   "source": "synthetic",
+   "tags": [
+    "SYNTHETIC_MODE=1",
+    "V=128256"
+   ]
+  },
+  {
+   "grid": [
+    4
+   ],
+   "kernel": "rejection_random_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "SYNTHETIC_MODE": false
+   },
+   "name": "syn:random:V31:nodraft1:syn0",
+   "ref": "triton",
+   "sha256": "b7a74ceff8953e4f29f3c33fc15f388f88ae9ba2947484c89371db5d557f4c21",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "SYNTHETIC_MODE=0",
+    "V=31",
+    "adversarial"
+   ]
+  },
+  {
+   "grid": [
+    4
+   ],
+   "kernel": "rejection_random_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "SYNTHETIC_MODE": true
+   },
+   "name": "syn:random:V31:nodraft1:syn1",
+   "ref": "triton",
+   "sha256": "2cf0c2676f5a4eb4787b094bc57c6ccad833cb36d37ce7e46988a55bc3e8918d",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "SYNTHETIC_MODE=1",
+    "V=31",
+    "adversarial"
+   ]
+  },
+  {
+   "grid": [
+    4
+   ],
+   "kernel": "rejection_random_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": false,
+    "SYNTHETIC_MODE": false
+   },
+   "name": "syn:random:V31:nodraft0:syn0",
+   "ref": "triton",
+   "sha256": "d285fac8a1a5e6f44f604c51a7e3b74917aad9b0a0c6b40a518c092a0def3ee4",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=0",
+    "SYNTHETIC_MODE=0",
+    "V=31",
+    "adversarial"
+   ]
+  },
+  {
+   "grid": [
+    4
+   ],
+   "kernel": "rejection_random_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": false,
+    "SYNTHETIC_MODE": true
+   },
+   "name": "syn:random:V31:nodraft0:syn1",
+   "ref": "triton",
+   "sha256": "60f9e1549d36b967d453733e91b362f2d90282934ce77be57e4e3ebc6679ef0c",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=0",
+    "SYNTHETIC_MODE=1",
+    "V=31",
+    "adversarial"
+   ]
+  },
+  {
+   "grid": [
+    4
+   ],
+   "kernel": "rejection_random_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "SYNTHETIC_MODE": false
+   },
+   "name": "syn:random:V1000:nodraft1:syn0",
+   "ref": "triton",
+   "sha256": "597c452ed431b442f4c9510489583f0de3067f08aa98813dff7076082634bc1d",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "SYNTHETIC_MODE=0",
+    "V=1000",
+    "adversarial"
+   ]
+  },
+  {
+   "grid": [
+    4
+   ],
+   "kernel": "rejection_random_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "SYNTHETIC_MODE": true
+   },
+   "name": "syn:random:V1000:nodraft1:syn1",
+   "ref": "triton",
+   "sha256": "0f6bab6741377687c941cde108e5306a911581e2576a4dbb7febf2a6096668f9",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "SYNTHETIC_MODE=1",
+    "V=1000",
+    "adversarial"
+   ]
+  },
+  {
+   "grid": [
+    4
+   ],
+   "kernel": "rejection_random_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": false,
+    "SYNTHETIC_MODE": false
+   },
+   "name": "syn:random:V1000:nodraft0:syn0",
+   "ref": "triton",
+   "sha256": "ae64367181f71c0fdc9195f98d8cf4d5477ce55e19b19dbcbe374556a39a757b",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=0",
+    "SYNTHETIC_MODE=0",
+    "V=1000",
+    "adversarial"
+   ]
+  },
+  {
+   "grid": [
+    4
+   ],
+   "kernel": "rejection_random_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": false,
+    "SYNTHETIC_MODE": true
+   },
+   "name": "syn:random:V1000:nodraft0:syn1",
+   "ref": "triton",
+   "sha256": "4c875dc58dc562f424eae8ec148169cb6965d1aabb7bdfccc5ae78e452f2bc2d",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=0",
+    "SYNTHETIC_MODE=1",
+    "V=1000",
+    "adversarial"
+   ]
+  },
+  {
+   "grid": [
+    3
+   ],
+   "kernel": "rejection_random_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": false,
+    "SYNTHETIC_MODE": false
+   },
+   "name": "syn:random:V1:nodraft0:syn0",
+   "ref": "triton",
+   "sha256": "e960298735660bd41f98295230d2bf023b60221cb636caf4a6b10c87a59e054e",
+   "source": "synthetic",
+   "tags": [
+    "V=1"
+   ]
+  },
+  {
+   "grid": [
+    1,
+    2
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": false,
+    "USE_FP64_GUMBEL": false
+   },
+   "name": "syn:recovered:V128256:nodraft0:fp64_0",
+   "ref": "triton",
+   "sha256": "8515bf3a37668967706e03f8b09ffef9ea7fee3bee1bdaf9e82c18dfab27fb57",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=0",
+    "USE_FP64_GUMBEL=0",
+    "V=128256"
+   ]
+  },
+  {
+   "grid": [
+    2,
+    1
+   ],
+   "kernel": "sample_recovered_tokens_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": true,
+    "USE_FP64_GUMBEL": true
+   },
+   "name": "syn:recovered:V128256:nodraft1:fp64_1",
+   "ref": "triton",
+   "sha256": "ecc02537dca523e419b6b1da3d90f9a8f6dfa74d73d552d741ab13723380f2d1",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "USE_FP64_GUMBEL=1",
+    "V=128256"
+   ]
+  },
+  {
+   "grid": [
+    2
+   ],
+   "kernel": "rejection_random_sample_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "NO_DRAFT_PROBS": false,
+    "SYNTHETIC_MODE": false
+   },
+   "name": "syn:random:V128256:nodraft0:syn0",
+   "ref": "triton",
+   "sha256": "af9f7a1b85ca220283b4d365069e54a42089f94d325bc04b71ba6beca19618bb",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=0",
+    "V=128256",
+    "adversarial",
+    "sanitized"
+   ]
+  },
+  {
+   "grid": [
+    7
+   ],
+   "kernel": "expand_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "MAX_NUM_TOKENS": 128
+   },
+   "name": "syn:expand:temperature",
+   "ref": "triton",
+   "sha256": "1f1a745eea0fc3841ca42c16d040e9d45f122f35660827e4dc510a5598d76200",
+   "source": "synthetic",
+   "tags": [
+    "ragged",
+    "x=float32"
+   ]
+  },
+  {
+   "grid": [
+    7
+   ],
+   "kernel": "expand_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "MAX_NUM_TOKENS": 128
+   },
+   "name": "syn:expand:top_k",
+   "ref": "triton",
+   "sha256": "0388a3d12183c90f1e6e0c179010c502d5a54cf047aa2f4230c14bbedc90a277",
+   "source": "synthetic",
+   "tags": [
+    "ragged",
+    "x=int32"
+   ]
+  },
+  {
+   "grid": [
+    7
+   ],
+   "kernel": "expand_kernel",
+   "kind": "kernel",
+   "kwargs": {
+    "MAX_NUM_TOKENS": 128
+   },
+   "name": "syn:expand:top_p",
+   "ref": "triton",
+   "sha256": "c06e382d037ed8fbe46ec1f769bb8a2b3c2035eb36a0c4593def03751ed4a171",
+   "source": "synthetic",
+   "tags": [
+    "ragged",
+    "x=float32"
+   ]
+  },
+  {
+   "kernel": "rejection_sample",
+   "kind": "rejection_sample",
+   "name": "e2e:greedy",
+   "ref": "triton",
+   "sha256": "a14a7be8960a0f07f6311857561dcfd6a0a7bdde814e5972943d241db00c1399",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "SYNTHETIC_MODE=0",
+    "USE_FP64_GUMBEL=0",
+    "V=256",
+    "mode=greedy"
+   ]
+  },
+  {
+   "kernel": "rejection_sample",
+   "kind": "rejection_sample",
+   "name": "e2e:mixed",
+   "ref": "triton",
+   "sha256": "60d5dd40df2810330682e4cb7b2290e0439e6d37ad2bb894b20c4ef6728be09e",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "SYNTHETIC_MODE=0",
+    "USE_FP64_GUMBEL=0",
+    "V=256",
+    "mode=mixed"
+   ]
+  },
+  {
+   "kernel": "rejection_sample",
+   "kind": "rejection_sample",
+   "name": "e2e:random",
+   "ref": "triton",
+   "sha256": "8982eec9161dee6a4aef7b8b9f8c3fc132e873e27a92e40142e92b605274804c",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "SYNTHETIC_MODE=0",
+    "USE_FP64_GUMBEL=0",
+    "V=256",
+    "mode=random"
+   ]
+  },
+  {
+   "kernel": "rejection_sample",
+   "kind": "rejection_sample",
+   "name": "e2e:random_draftprobs_fp64",
+   "ref": "triton",
+   "sha256": "0d391b8db4b36f19b255c9f02dacf7d59ee72c0d1da6f92b98cd9ffa2de52667",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=0",
+    "SYNTHETIC_MODE=0",
+    "USE_FP64_GUMBEL=1",
+    "V=256",
+    "mode=random"
+   ]
+  },
+  {
+   "kernel": "rejection_sample",
+   "kind": "rejection_sample",
+   "name": "e2e:mixed_synthetic",
+   "ref": "triton_int32_cast",
+   "sha256": "0ce123ed74307880dad86b399b158a32fc99101b5b02ab23130cbac66a1a66b9",
+   "source": "synthetic",
+   "tags": [
+    "NO_DRAFT_PROBS=1",
+    "SYNTHETIC_MODE=1",
+    "USE_FP64_GUMBEL=0",
+    "V=256",
+    "mode=mixed"
+   ]
+  }
+ ],
+ "dump_source": "runs/identity_notriton/dumps",
+ "format": "rs_golden_v1",
+ "generator_git_sha": "d2d64eef2ecbfcb158cd895f4d153509e916fe72",
+ "inventory": {
+  "expand_kernel|e2e_dump|ref=triton": 2,
+  "expand_kernel|synthetic|ref=triton": 3,
+  "rejection_greedy_sample_kernel|e2e_dump|ref=triton": 2,
+  "rejection_greedy_sample_kernel|synthetic|ref=triton": 3,
+  "rejection_greedy_sample_kernel|synthetic|ref=triton_int32_cast": 3,
+  "rejection_random_sample_kernel|e2e_dump|ref=triton": 2,
+  "rejection_random_sample_kernel|synthetic|ref=triton": 10,
+  "rejection_sample|synthetic|ref=triton": 4,
+  "rejection_sample|synthetic|ref=triton_int32_cast": 1,
+  "sample_recovered_tokens_kernel|e2e_dump|ref=triton": 2,
+  "sample_recovered_tokens_kernel|synthetic|ref=triton": 19
+ },
+ "num_cases": 51,
+ "pt_sha256": "d346e214bfed108394d19a63129f4a1aeba04900f625520226403a1f8535a964",
+ "versions": {
+  "llvmlite": "0.46.0",
+  "numba": "0.63.1",
+  "torch": "2.7.0+cpu",
+  "triton": "3.3.0",
+  "triton_dist": "3.3.0+gite60f448f",
+  "vllm": "0.23.0+empty"
+ }
+}

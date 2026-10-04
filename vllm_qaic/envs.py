@@ -22,7 +22,6 @@ if TYPE_CHECKING:
     VLLM_QAIC_NUM_CORES: int | None = None
     VLLM_QAIC_QPC_PATH: str | None = None
     VLLM_TORCH_QAIC_PROFILER_DIR: str | None = None
-    VLLM_QAIC_AOT_REJECTION_SAMPLER_IMPL: str = "triton"
 
 # --8<-- [start:env-vars-definition]
 qaic_environment_variables: dict[str, Callable[[], Any]] = {
@@ -38,10 +37,6 @@ qaic_environment_variables: dict[str, Callable[[], Any]] = {
     "VLLM_QAIC_QPC_PATH": lambda: os.getenv("VLLM_QAIC_QPC_PATH", None),
     "VLLM_TORCH_QAIC_PROFILER_DIR": lambda: os.getenv(
         "VLLM_TORCH_QAIC_PROFILER_DIR", None
-    ),
-    # AOT host rejection-sampler backend: "triton" (triton-cpu) or "numba".
-    "VLLM_QAIC_AOT_REJECTION_SAMPLER_IMPL": lambda: (
-        os.getenv("VLLM_QAIC_AOT_REJECTION_SAMPLER_IMPL", "triton").strip().lower()
     ),
 }
 environment_variables.update(qaic_environment_variables)

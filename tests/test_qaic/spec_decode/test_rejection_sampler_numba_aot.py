@@ -2,11 +2,11 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 # ------------------------------------------------------------------
-"""CPU-only tests for the QAIC AOT rejection-sampler backend selector.
+"""CPU-only tests for the QAIC AOT Numba rejection sampler.
 
 Bit-equivalence of the Numba kernels against triton-cpu is covered by
-experiments/test_numba_rejection_kernels{,_prod}.py; these tests cover the
-selector, install/uninstall, validation guards and debug instrumentation.
+tests/test_qaic/spec_decode/rejection_parity/; these tests cover
+install/uninstall, validation guards and debug instrumentation.
 """
 
 import json
@@ -25,7 +25,7 @@ UPSTREAM = {n: getattr(rs, n) for n in rsn.KERNEL_NAMES}
 @pytest.fixture(autouse=True)
 def _restore(monkeypatch, tmp_path):
     for var in (
-        rsn.IMPL_ENV,
+        rsn._REMOVED_IMPL_ENV,
         "VLLM_QAIC_RS_COUNTERS",
         "VLLM_QAIC_RS_COUNTERS_DIR",
         "VLLM_QAIC_RS_DUMP",
@@ -44,69 +44,52 @@ def _restore(monkeypatch, tmp_path):
     assert rs.RejectionSampler.forward is forward
 
 
-@pytest.mark.parametrize(
-    "value,expected",
-    [
-        (None, "triton"),
-        ("", "triton"),
-        ("triton", "triton"),
-        ("NUMBA", "numba"),
-        (" numba ", "numba"),
-    ],
-)
-def test_selector(monkeypatch, value, expected):
-    if value is not None:
-        monkeypatch.setenv(rsn.IMPL_ENV, value)
-    assert rsn.selected_implementation() == expected
-
-
-@pytest.mark.parametrize("value", ["pytorch", "hybrid", "triton-cpu"])
-def test_selector_invalid_raises(monkeypatch, value):
-    monkeypatch.setenv(rsn.IMPL_ENV, value)
-    with pytest.raises(RuntimeError, match=rsn.IMPL_ENV):
-        rsn.selected_implementation()
-    with pytest.raises(RuntimeError):
-        rsn.install()
-
-
-def test_envs_declares_selector(monkeypatch):
+def test_envs_no_longer_declares_selector():
     import vllm_qaic.envs as envs
 
-    assert envs.VLLM_QAIC_AOT_REJECTION_SAMPLER_IMPL == "triton"
-    monkeypatch.setenv(rsn.IMPL_ENV, "Numba")
-    assert envs.VLLM_QAIC_AOT_REJECTION_SAMPLER_IMPL == "numba"
+    assert rsn._REMOVED_IMPL_ENV not in envs.qaic_environment_variables
 
 
-def test_triton_default_leaves_upstream_untouched(_restore):
-    assert rsn.install() == "triton"
-    for n, k in UPSTREAM.items():
-        assert getattr(rs, n) is k
-    assert rs.RejectionSampler.forward is _restore
-
-
-def test_numba_install_swaps_and_uninstall_restores(monkeypatch):
-    monkeypatch.setenv(rsn.IMPL_ENV, "numba")
+def test_install_swaps_and_uninstall_restores(_restore):
     assert rsn.install() == "numba"
     for n in rsn.KERNEL_NAMES:
         assert getattr(rs, n) is not UPSTREAM[n]
         assert isinstance(getattr(rs, n), rsn._NumbaKernel)
+    assert rs.RejectionSampler.forward is _restore
     rsn.uninstall()
     for n, k in UPSTREAM.items():
         assert getattr(rs, n) is k
 
 
-def test_install_idempotent_and_conflict_raises(monkeypatch):
-    monkeypatch.setenv(rsn.IMPL_ENV, "numba")
+def test_install_idempotent():
     rsn.install()
     first = rs.expand_kernel
     rsn.install()
     assert rs.expand_kernel is first
-    with pytest.raises(RuntimeError, match="already installed"):
-        rsn.install("triton")
+
+
+@pytest.mark.parametrize("value", ["triton", "numba"])
+def test_removed_selector_warns_and_is_ignored(monkeypatch, value):
+    monkeypatch.setenv(rsn._REMOVED_IMPL_ENV, value)
+    warnings = []
+    monkeypatch.setattr(rsn.logger, "warning", lambda *a, **k: warnings.append(a))
+    assert rsn.install() == "numba"
+    assert isinstance(rs.expand_kernel, rsn._NumbaKernel)
+    assert len(warnings) == 1 and rsn._REMOVED_IMPL_ENV in warnings[0]
+
+
+def test_install_fails_loudly_without_numba(monkeypatch):
+    def _broken(threads):
+        raise ImportError("No module named 'numba'")
+
+    monkeypatch.setattr(rsn, "_configure_numba", _broken)
+    with pytest.raises(RuntimeError, match="requires Numba"):
+        rsn.install()
+    # Nothing was swapped, so the fixture's restore check still holds.
+    assert not rsn._installed
 
 
 def test_expand_matches_reference_through_upstream_helper(monkeypatch):
-    monkeypatch.setenv(rsn.IMPL_ENV, "numba")
     rsn.install()
     temp = torch.tensor([0.0, 0.7, 1.3], dtype=torch.float32)
     cu = torch.tensor([2, 2, 5], dtype=torch.int32)
@@ -129,7 +112,6 @@ def _greedy_args(draft_dtype=torch.int64):
 
 
 def test_greedy_int64_production_dtypes(monkeypatch):
-    monkeypatch.setenv(rsn.IMPL_ENV, "numba")
     rsn.install()
     args = _greedy_args()
     rs.rejection_greedy_sample_kernel[(2,)](*args, SYNTHETIC_MODE=False)
@@ -154,7 +136,6 @@ def test_greedy_int64_production_dtypes(monkeypatch):
     ],
 )
 def test_guards_raise(monkeypatch, mutate, exc):
-    monkeypatch.setenv(rsn.IMPL_ENV, "numba")
     rsn.install()
     args = _greedy_args()
     mutate(args)
@@ -163,7 +144,6 @@ def test_guards_raise(monkeypatch, mutate, exc):
 
 
 def test_recovered_rejects_wrong_inv_q_dtype(monkeypatch):
-    monkeypatch.setenv(rsn.IMPL_ENV, "numba")
     rsn.install()
     cu = torch.tensor([2], dtype=torch.int32)
     draft = torch.zeros(2, dtype=torch.int64)
@@ -184,20 +164,17 @@ def test_recovered_rejects_wrong_inv_q_dtype(monkeypatch):
         )
 
 
-def test_prewarm_noop_for_triton():
-    rsn.install("triton")
+def test_prewarm_noop_before_install():
     assert rsn.prewarm() == 0.0
 
 
 def test_prewarm_numba(monkeypatch):
-    monkeypatch.setenv(rsn.IMPL_ENV, "numba")
     rsn.install()
     assert rsn.prewarm() > 0.0
 
 
-@pytest.mark.parametrize("impl", ["triton", "numba"])
-def test_counters_and_dump_round_trip(_restore, monkeypatch, tmp_path, impl):
-    monkeypatch.setenv(rsn.IMPL_ENV, impl)
+def test_counters_and_dump_round_trip(_restore, monkeypatch, tmp_path):
+    impl = "numba"
     monkeypatch.setenv("VLLM_QAIC_RS_COUNTERS", "1")
     monkeypatch.setenv("VLLM_QAIC_RS_COUNTERS_DIR", str(tmp_path / "c"))
     monkeypatch.setenv("VLLM_QAIC_RS_DUMP", str(tmp_path / "d"))
@@ -225,7 +202,6 @@ def test_counters_and_dump_round_trip(_restore, monkeypatch, tmp_path, impl):
 def test_prewarm_does_not_consume_global_rng(monkeypatch):
     # The worker seeds the global RNG before warm-up; prewarm must not shift
     # the stream unseeded requests later sample from.
-    monkeypatch.setenv(rsn.IMPL_ENV, "numba")
     rsn.install()
     torch.manual_seed(1234)
     expected = torch.rand(8)

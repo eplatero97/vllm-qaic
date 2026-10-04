@@ -6,7 +6,8 @@
 
 The patched forward must be output-equivalent to upstream vLLM's forward; its
 only intended delta is skipping a tensor clone on the greedy/no-logprobs path.
-Upstream Triton kernels run on CPU through triton-cpu::
+With triton-cpu installed the upstream Triton kernels run on CPU; otherwise
+both forwards run on the QAIC AOT Numba kernels (the production backend)::
 
     TRITON_CPU_BACKEND=1 .venv_aot/bin/python -m pytest -s \
         tests/test_qaic/spec_decode/test_patch_rejection_sampler.py -v
@@ -32,21 +33,9 @@ from vllm.v1.spec_decode.metadata import SpecDecodeMetadata
 import vllm_qaic.patch.patch_rejection_sampler as qaic_patch
 from vllm_qaic.v1.sample import topk_topp_sampler_shim
 
+# pytest prepend import mode puts this directory on sys.path.
+from rejection_parity._triton_probe import has_triton_cpu  # noqa: E402
 
-def _has_triton_cpu_backend() -> bool:
-    try:
-        from triton.backends import backends
-
-        return "cpu" in backends
-    except Exception:
-        return False
-
-
-# Upstream rejection_sample launches Triton kernels on CPU tensors.
-requires_triton_cpu = pytest.mark.skipif(
-    not _has_triton_cpu_backend(),
-    reason="Requires the triton-cpu backend to run upstream kernels on CPU",
-)
 
 VOCAB_SIZE = 64
 DRAFT_TOKEN_IDS = [[3, 7, 11], [5, 9], [2, 4, 6, 8]]
@@ -69,7 +58,30 @@ def _load_pristine_upstream_module():
     return module
 
 
-_UPSTREAM_FORWARD = _load_pristine_upstream_module().RejectionSampler.forward
+_PRISTINE_RS = _load_pristine_upstream_module()
+_UPSTREAM_FORWARD = _PRISTINE_RS.RejectionSampler.forward
+
+
+@pytest.fixture
+def rs_kernels(monkeypatch):
+    """Make the rejection-sampler kernels callable on CPU tensors.
+
+    Uses the upstream Triton kernels when triton-cpu is installed; otherwise
+    installs the AOT Numba kernels into both the live and the pristine module.
+    """
+    if has_triton_cpu():
+        yield "triton"
+        return
+    pytest.importorskip("numba")
+    from vllm_qaic.v1.sample import rejection_sampler_numba as rsn
+
+    rsn.install()
+    try:
+        for name in rsn.KERNEL_NAMES:
+            monkeypatch.setattr(_PRISTINE_RS, name, getattr(upstream_rs, name))
+        yield "numba"
+    finally:
+        rsn.uninstall()
 
 
 def _make_spec_metadata(draft_token_ids: list[list[int]]) -> SpecDecodeMetadata:
@@ -138,10 +150,12 @@ def _install_topk_topp_shim(monkeypatch) -> None:
     Without it, >= 8-row top-k/top-p on the AOT platform selects the Triton
     kernel, which calls the unavailable ``num_compute_units``.
     """
+    # Without triton upstream never defines it; raising=False also undoes that.
     monkeypatch.setattr(
         topk_topp_sampler,
         "apply_top_k_top_p_triton",
-        topk_topp_sampler.apply_top_k_top_p_triton,
+        getattr(topk_topp_sampler, "apply_top_k_top_p_triton", None),
+        raising=False,
     )
     monkeypatch.setattr(topk_topp_sampler_shim, "_shim_installed", False)
     topk_topp_sampler_shim.install()
@@ -170,7 +184,7 @@ CASES = {
 }
 
 
-@requires_triton_cpu
+@pytest.mark.usefixtures("rs_kernels")
 @pytest.mark.parametrize("seed", [0, 1, 2])
 @pytest.mark.parametrize("with_draft_probs", [False, True])
 @pytest.mark.parametrize("synthetic", [False, True])
@@ -216,7 +230,7 @@ def test_qaic_forward_matches_upstream(
             ), name
 
 
-@requires_triton_cpu
+@pytest.mark.usefixtures("rs_kernels")
 def test_rejection_sample_receives_constrained_logits_and_options(monkeypatch):
     """Regression: the patch used to pass softmax(logits) (upstream softmaxes
     again -> double softmax) and dropped the synthetic/fp64 options."""
@@ -274,10 +288,12 @@ def test_topk_topp_shim_avoids_num_compute_units(monkeypatch):
         type(current_platform), "num_compute_units", classmethod(_unavailable)
     )
     # Snapshot the unshimmed state so the shim is undone after the test.
+    # Without triton upstream never defines it; raising=False also undoes that.
     monkeypatch.setattr(
         topk_topp_sampler,
         "apply_top_k_top_p_triton",
-        topk_topp_sampler.apply_top_k_top_p_triton,
+        getattr(topk_topp_sampler, "apply_top_k_top_p_triton", None),
+        raising=False,
     )
     monkeypatch.setattr(topk_topp_sampler_shim, "_shim_installed", False)
 

@@ -3,28 +3,26 @@
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 # ------------------------------------------------------------------
 
-"""QAIC AOT rejection-sampler backend selector (triton-cpu or Numba).
+"""QAIC AOT rejection sampler: Numba replacement for the triton kernels.
 
 On AOT the upstream rejection sampler runs on the host.  Its four
 ``@triton.jit`` kernels are module globals of
-``vllm.v1.sample.rejection_sampler`` looked up at call time, so a backend swap
-only replaces those globals; the upstream call sites (``kernel[grid](...)``)
-are untouched.
+``vllm.v1.sample.rejection_sampler`` looked up at call time, so ``install()``
+only replaces those globals with the bit-exact Numba ports from
+``vllm_qaic.v1.sample.numba_rejection_kernels``; the upstream call sites
+(``kernel[grid](...)``) are untouched.  No triton (triton-cpu) install is
+needed: without triton the upstream globals are uncallable placeholders, so
+``install()`` must run before the first speculative-decoding step.
 
-``VLLM_QAIC_AOT_REJECTION_SAMPLER_IMPL`` selects the backend:
-
-* ``triton`` (default) -- leave the upstream triton-cpu kernels in place.
-* ``numba``            -- install the bit-exact Numba ports from
-  ``vllm_qaic.v1.sample.numba_rejection_kernels``.
-
-Debug-only instrumentation (both backends, adds per-launch overhead):
+Debug-only instrumentation (adds per-launch overhead):
 
 * ``VLLM_QAIC_RS_COUNTERS=1`` -- count launches per (kernel, constexpr combo,
   dtype signature, batch, token bucket) plus kernel/forward wall time, dumped
   as JSON to ``$VLLM_QAIC_RS_COUNTERS_DIR/rs_counters_<pid>.json``.
 * ``VLLM_QAIC_RS_DUMP=<dir>`` -- ``torch.save`` the inputs and output of the
   first ``VLLM_QAIC_RS_DUMP_STEPS`` (default 4) launches per combo, for offline
-  Triton-vs-Numba replay (``experiments/replay_rs_dumps.py``).
+  Triton-vs-Numba replay and tier-B fixture generation
+  (``tools/rs_parity/gen_golden_fixtures.py``).
 """
 
 from __future__ import annotations
@@ -45,10 +43,9 @@ from vllm_qaic.logger import init_logger
 
 logger = init_logger(__name__)
 
-IMPL_ENV = "VLLM_QAIC_AOT_REJECTION_SAMPLER_IMPL"
-TRITON_IMPL = "triton"
 NUMBA_IMPL = "numba"
-_IMPLS = (TRITON_IMPL, NUMBA_IMPL)
+# Removed backend selector; only checked to warn users who still set it.
+_REMOVED_IMPL_ENV = "VLLM_QAIC_AOT_REJECTION_SAMPLER_IMPL"
 
 KERNEL_NAMES = (
     "expand_kernel",
@@ -57,17 +54,10 @@ KERNEL_NAMES = (
     "sample_recovered_tokens_kernel",
 )
 
-_installed_impl: str | None = None
+_installed = False
 _originals: dict[str, Any] = {}
 _original_forward: Any = None
 _numba_threads: int | None = None
-
-
-def selected_implementation() -> str:
-    impl = os.environ.get(IMPL_ENV, "").strip().lower() or TRITON_IMPL
-    if impl not in _IMPLS:
-        raise RuntimeError(f"{IMPL_ENV} must be one of {_IMPLS}; got {impl!r}.")
-    return impl
 
 
 # --------------------------------------------------------------------------
@@ -454,35 +444,35 @@ def _configure_numba(threads: int) -> dict[str, Any]:
     }
 
 
-def install(impl: str | None = None) -> str:
-    """Select the AOT rejection-sampler backend.  Idempotent per process."""
-    global _installed_impl, _instrumentation
-    impl = selected_implementation() if impl is None else impl
-    if impl not in _IMPLS:
-        raise RuntimeError(f"unknown rejection-sampler impl {impl!r}")
-    if _installed_impl is not None:
-        if impl != _installed_impl:
-            raise RuntimeError(
-                f"AOT rejection sampler already installed as {_installed_impl!r}; "
-                f"switching to {impl!r} within one process is unsupported."
-            )
-        return impl
+def install() -> str:
+    """Install the Numba rejection-sampler kernels.  Idempotent per process."""
+    global _installed, _instrumentation
+    if _installed:
+        return NUMBA_IMPL
+    if os.environ.get(_REMOVED_IMPL_ENV):
+        logger.warning(
+            "%s is no longer supported and is ignored; the QAIC AOT rejection "
+            "sampler always uses Numba.",
+            _REMOVED_IMPL_ENV,
+        )
 
     import vllm.v1.sample.rejection_sampler as rs
 
-    _originals.update({n: getattr(rs, n) for n in KERNEL_NAMES})
-    if impl == NUMBA_IMPL:
+    try:
         info = _configure_numba(torch.get_num_threads())
         from vllm_qaic.v1.sample import numba_rejection_kernels  # noqa: F401
+    except Exception as e:
+        raise RuntimeError(
+            "QAIC AOT speculative decoding requires Numba for the host rejection "
+            "sampler (see requirements/vllm_dependency_aot.txt for the pinned "
+            f"numba version), but it could not be loaded: {e}"
+        ) from e
 
-        kernels = {n: _NumbaKernel(n, _NUMBA_FNS[n]) for n in KERNEL_NAMES}
-        detail = ", ".join(f"{k}={v}" for k, v in info.items())
-    else:
-        kernels = dict(_originals)
-        omp = os.environ.get("OMP_NUM_THREADS")
-        detail = f"torch_threads={torch.get_num_threads()}, OMP_NUM_THREADS={omp}"
+    _originals.update({n: getattr(rs, n) for n in KERNEL_NAMES})
+    kernels: dict[str, Any] = {n: _NumbaKernel(n, _NUMBA_FNS[n]) for n in KERNEL_NAMES}
+    detail = ", ".join(f"{k}={v}" for k, v in info.items())
 
-    instr = _Instrumentation(impl)
+    instr = _Instrumentation(NUMBA_IMPL)
     if instr.enabled:
         kernels = {n: instr.wrap(n, k) for n, k in kernels.items()}
         _wrap_forward(rs, instr)
@@ -492,15 +482,15 @@ def install(impl: str | None = None) -> str:
         )
     for n, k in kernels.items():
         setattr(rs, n, k)
-    _installed_impl = impl
-    logger.info("AOT rejection sampler backend: %s (%s)", impl, detail)
-    return impl
+    _installed = True
+    logger.info("AOT rejection sampler backend: %s (%s)", NUMBA_IMPL, detail)
+    return NUMBA_IMPL
 
 
 def uninstall() -> None:
     """Restore the upstream kernels (tests only)."""
-    global _installed_impl, _instrumentation, _original_forward
-    if _installed_impl is None:
+    global _installed, _instrumentation, _original_forward
+    if not _installed:
         return
     import vllm.v1.sample.rejection_sampler as rs
 
@@ -512,24 +502,24 @@ def uninstall() -> None:
     if _instrumentation is not None:
         _instrumentation.flush()
     _originals.clear()
-    _installed_impl = None
+    _installed = False
     _instrumentation = None
 
 
 def prewarm() -> float:
     """Compile/load every production Numba signature; returns seconds.
 
-    No-op for the triton backend (left exactly as upstream).  Inputs mirror
+    No-op unless ``install()`` has run.  Inputs mirror
     the AOT production dtypes: int64 draft ids / argmax / recovered, int32
     cu / bonus / output, fp64 uniform, fp32 probs, fp32 or fp64 inv_q, and
     fp32 / int32 expand inputs (temperature, top_p / top_k).
     """
-    if _installed_impl != NUMBA_IMPL:
+    if not _installed:
         return 0.0
     t0 = time.perf_counter()
     # Inputs come from a private generator: drawing from the global torch RNG
     # here would shift every later unseeded sample (the engine seeds the global
-    # RNG before warm-up), so the numba arm would not reproduce the triton arm.
+    # RNG before warm-up), so outputs would depend on whether prewarm ran.
     gen = torch.Generator().manual_seed(0)
     B, K, V = 2, 2, 64
     T = B * K
