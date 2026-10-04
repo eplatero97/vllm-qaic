@@ -704,6 +704,7 @@ class QaicWorkerAoT(QaicWorker):
         from vllm_qaic.v1.sample import rejection_sampler_numba
 
         rejection_sampler_numba.prewarm()
+        self.model_runner._qaic_warm_up_drafter()
         self.model_runner._qaic_dummy_run()
         return CompilationTimes(language_model=0.0, encoder=0.0)
 

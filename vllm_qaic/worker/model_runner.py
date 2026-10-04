@@ -1708,6 +1708,17 @@ class QaicModelRunnerAoT(GPUModelRunner):
             time_after_load - time_before_load,
         )
 
+    def _qaic_warm_up_drafter(self) -> None:
+        # Runs outside _qaic_dummy_run so disagg decode nodes (which return
+        # early there) still compile the ngram kernel at start-up.
+        from vllm_qaic.spec_decode.ngram_warmup import (  # noqa: PLC0415
+            maybe_warm_up_ngram_proposer,
+        )
+
+        maybe_warm_up_ngram_proposer(
+            self.speculative_config, self.drafter, self.input_batch
+        )
+
     def _qaic_dummy_run(self) -> None:
         if self.is_pooling_model:
             # TODO: check if pooler dummy run can be added
