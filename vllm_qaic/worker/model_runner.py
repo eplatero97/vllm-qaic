@@ -1715,8 +1715,11 @@ class QaicModelRunnerAoT(GPUModelRunner):
             maybe_warm_up_ngram_proposer,
         )
 
+        # The parent only sets self.drafter when speculative decoding is on.
         maybe_warm_up_ngram_proposer(
-            self.speculative_config, self.drafter, self.input_batch
+            self.speculative_config,
+            getattr(self, "drafter", None),
+            self.input_batch,
         )
 
     def _qaic_dummy_run(self) -> None:
