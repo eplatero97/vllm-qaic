@@ -4,7 +4,7 @@
 # ------------------------------------------------------------------
 """Generate the tier-B golden fixtures for the Numba rejection sampler.
 
-Writes ``tests/test_qaic/spec_decode/rejection_parity/fixtures/rs_golden_v1.pt``
+Writes ``tests/unit/spec_decode/rejection_parity/fixtures/rs_golden_v1.pt``
 (deflate-compressed ``torch.save``; ``torch.load(weights_only=True)``-safe)
 plus ``rs_golden_v1.json`` metadata.  Every stored output is produced by the
 REAL upstream triton-cpu kernels, so this script refuses to run unless the
@@ -62,7 +62,7 @@ from typing import Any
 os.environ.setdefault("TRITON_CPU_BACKEND", "1")
 
 REPO = Path(__file__).resolve().parents[2]
-PARITY_DIR = REPO / "tests" / "test_qaic" / "spec_decode" / "rejection_parity"
+PARITY_DIR = REPO / "tests" / "unit" / "spec_decode" / "rejection_parity"
 sys.path.insert(0, str(PARITY_DIR))
 
 DEFAULT_DUMPS = REPO / "runs" / "identity_notriton" / "dumps"

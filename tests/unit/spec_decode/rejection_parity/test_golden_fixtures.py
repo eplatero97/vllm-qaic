@@ -18,7 +18,7 @@ must not be mutated.  The fixture file and every case are sha256-checked against
 ``rs_golden_v1.json``.
 
     .venv_aot/bin/python -m pytest -s \
-        tests/test_qaic/spec_decode/rejection_parity/test_golden_fixtures.py
+        tests/unit/spec_decode/rejection_parity/test_golden_fixtures.py
 """
 
 from __future__ import annotations

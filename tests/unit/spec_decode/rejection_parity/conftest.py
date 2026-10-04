@@ -14,7 +14,7 @@
   kernels and call sites; no triton needed.
 
     VLLM_QAIC_REQUIRE_TRITON_PARITY=1 TRITON_CPU_BACKEND=1 .venv_aot/bin/python \
-        -m pytest -s tests/test_qaic/spec_decode/rejection_parity
+        -m pytest -s tests/unit/spec_decode/rejection_parity
 """
 
 import os

@@ -5,7 +5,7 @@
 """CPU-only tests for the QAIC AOT Numba rejection sampler.
 
 Bit-equivalence of the Numba kernels against triton-cpu is covered by
-tests/test_qaic/spec_decode/rejection_parity/; these tests cover
+tests/unit/spec_decode/rejection_parity/; these tests cover
 install/uninstall, validation guards and debug instrumentation.
 """
 

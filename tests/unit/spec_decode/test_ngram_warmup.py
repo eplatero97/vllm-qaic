@@ -169,6 +169,26 @@ def test_gating_skips_missing_drafter():
     assert ngram_warmup.maybe_warm_up_ngram_proposer(spec, None, batch) is None
 
 
+def test_runner_warmup_handles_a_nospec_runner_without_drafter(monkeypatch):
+    """Regression for AOT nospec startup: GPUModelRunner omits ``drafter``."""
+    from vllm_qaic.worker.model_runner import QaicModelRunnerAoT
+
+    runner = SimpleNamespace(
+        speculative_config=None,
+        input_batch=object(),
+    )
+    calls = []
+    monkeypatch.setattr(
+        ngram_warmup,
+        "maybe_warm_up_ngram_proposer",
+        lambda spec, drafter, batch: calls.append((spec, drafter, batch)),
+    )
+
+    QaicModelRunnerAoT._qaic_warm_up_drafter(runner)
+
+    assert calls == [(None, None, runner.input_batch)]
+
+
 def test_failure_warns_and_continues(caplog):
     spec = _make_config().speculative_config
     drafter = _RecordingDrafter(exc=RuntimeError("boom"))

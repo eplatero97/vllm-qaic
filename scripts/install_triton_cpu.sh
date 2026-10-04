@@ -8,7 +8,7 @@
 #
 # OPTIONAL, test-only.  AOT SpD does NOT need triton-cpu: its host rejection sampler
 # always runs on Numba.  Install this only to run the Numba-vs-Triton rejection-sampler
-# parity tests (tests/test_qaic/spec_decode/rejection_parity/), which execute the
+# parity tests (tests/unit/spec_decode/rejection_parity/), which execute the
 # upstream Triton kernels on CPU as the reference.  Run it after install.sh aot.
 #
 # Usage (standalone):
@@ -18,7 +18,7 @@
 #   TRITON_CPU=1 ./scripts/install.sh aot
 #
 # Then run the parity tests:
-#   VLLM_QAIC_REQUIRE_TRITON_PARITY=1 pytest -s tests/test_qaic/spec_decode/rejection_parity
+#   VLLM_QAIC_REQUIRE_TRITON_PARITY=1 pytest -s tests/unit/spec_decode/rejection_parity
 #
 # Environment (all have defaults in utility.sh):
 #   TRITON_CPU_SRC      Clone destination (default: $HOME/triton-cpu)
@@ -186,5 +186,5 @@ echo "  triton-cpu installed successfully (parity-test extra only;"
 echo "  not needed for AOT SpD, which uses the Numba rejection sampler)"
 echo ""
 echo "  Run the Numba/Triton rejection-sampler parity tests with:"
-echo "    VLLM_QAIC_REQUIRE_TRITON_PARITY=1 pytest -s tests/test_qaic/spec_decode/rejection_parity"
+echo "    VLLM_QAIC_REQUIRE_TRITON_PARITY=1 pytest -s tests/unit/spec_decode/rejection_parity"
 echo "========================================================"

@@ -21,7 +21,7 @@ fp64, temperature/top_p fp32, top_k int32), launches the real upstream Triton
 Tier A (``triton_parity``): skipped without triton-cpu.
 
     TRITON_CPU_BACKEND=1 .venv_aot/bin/python -m pytest -s -q \
-        tests/test_qaic/spec_decode/rejection_parity/test_triton_parity_prod.py
+        tests/unit/spec_decode/rejection_parity/test_triton_parity_prod.py
     RS_PROD_HEAVY=0 ...   # skip the 128x16 x V=128256 recovered case (~1 GB probs)
 """
 

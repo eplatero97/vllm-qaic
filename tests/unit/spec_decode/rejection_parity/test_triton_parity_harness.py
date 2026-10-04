@@ -18,7 +18,7 @@ loop and the PyTorch backend are dropped and the production wrapper
 Tier A (``triton_parity``): skipped without triton-cpu.
 
     TRITON_CPU_BACKEND=1 .venv_aot/bin/python -m pytest -s -q \
-        tests/test_qaic/spec_decode/rejection_parity/test_triton_parity_harness.py
+        tests/unit/spec_decode/rejection_parity/test_triton_parity_harness.py
 """
 
 from __future__ import annotations

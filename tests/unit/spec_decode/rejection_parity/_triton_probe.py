@@ -17,7 +17,7 @@ No exception escapes; any failure means "no triton-cpu".  Set
 ``TRITON_CPU_BACKEND=1`` before the first ``triton`` import (the
 ``rejection_parity`` conftest does this).
 
-Import path from a sibling test under ``tests/test_qaic/spec_decode`` (pytest
+Import path from a sibling test under ``tests/unit/spec_decode`` (pytest
 prepend import mode puts that directory on ``sys.path``)::
 
     from rejection_parity._triton_probe import has_triton_cpu

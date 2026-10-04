@@ -11,7 +11,7 @@ ties, ragged/empty requests, draft ids at row edges, and odd vocab sizes
 Tier A (``triton_parity``): skipped without triton-cpu.
 
     TRITON_CPU_BACKEND=1 .venv_aot/bin/python -m pytest -s -q \
-        tests/test_qaic/spec_decode/rejection_parity/test_triton_parity_kernels.py
+        tests/unit/spec_decode/rejection_parity/test_triton_parity_kernels.py
 """
 
 import os

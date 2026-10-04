@@ -10,7 +10,7 @@ With triton-cpu installed the upstream Triton kernels run on CPU; otherwise
 both forwards run on the QAIC AOT Numba kernels (the production backend)::
 
     TRITON_CPU_BACKEND=1 .venv_aot/bin/python -m pytest -s \
-        tests/test_qaic/spec_decode/test_patch_rejection_sampler.py -v
+        tests/unit/spec_decode/test_patch_rejection_sampler.py -v
 """
 
 import importlib.util
@@ -33,8 +33,7 @@ from vllm.v1.spec_decode.metadata import SpecDecodeMetadata
 import vllm_qaic.patch.patch_rejection_sampler as qaic_patch
 from vllm_qaic.v1.sample import topk_topp_sampler_shim
 
-# pytest prepend import mode puts this directory on sys.path.
-from rejection_parity._triton_probe import has_triton_cpu  # noqa: E402
+from .rejection_parity._triton_probe import has_triton_cpu  # noqa: E402
 
 
 VOCAB_SIZE = 64
