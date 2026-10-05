@@ -22,6 +22,10 @@ os.environ.setdefault("TRITON_CPU_BACKEND", "1")
 import pytest
 import torch
 
+# Apply QAIC's AOT sampler patches before importing vLLM modules that bind
+# ``apply_top_k_top_p`` as a module-level alias.
+import vllm_qaic.patch  # noqa: E402,F401
+
 import vllm.v1.sample.rejection_sampler as upstream_rs
 from vllm.v1.sample.logits_processor import LogitsProcessors
 from vllm.v1.sample.metadata import SamplingMetadata
@@ -143,9 +147,19 @@ def _make_rejection_sampler(
 
 
 def _install_topk_topp_shim(monkeypatch) -> None:
-    """Ensure the centralized AOT top-k/top-p patch is active for this test."""
+    """Ensure the centralized AOT top-k/top-p patch is active for this test.
+
+    Other modules in the full unit collection can import rejection_sampler
+    before this module. Patch the function-global alias as well so this test is
+    independent of pytest's module collection order.
+    """
     monkeypatch.setattr(patch_topk_topp_sampler, "_installed", False)
     patch_topk_topp_sampler.install()
+    monkeypatch.setitem(
+        qaic_patch.apply_sampling_constraints.__globals__,
+        "apply_top_k_top_p",
+        patch_topk_topp_sampler.apply_top_k_top_p_pytorch,
+    )
 
 
 def _run(forward, sampler, metadata, logits, draft_probs, sampling_kwargs):
