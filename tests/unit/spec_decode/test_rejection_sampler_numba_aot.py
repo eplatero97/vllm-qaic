@@ -208,3 +208,39 @@ def test_prewarm_does_not_consume_global_rng(monkeypatch):
     torch.manual_seed(1234)
     rsn.prewarm()
     assert torch.equal(torch.rand(8), expected)
+
+
+def test_install_preserves_torch_thread_cap(tmp_path):
+    # Numba's OpenMP pool shares torch's libgomp and, on start-up, resets the
+    # OpenMP thread count to NUMBA_NUM_THREADS (CPU count).  The pool starts
+    # once per process, so check in a fresh interpreter, mirroring the worker
+    # (torch capped first, then install()).
+    import os
+    import subprocess
+    import sys
+
+    code = (
+        "import torch\n"
+        "torch.set_num_threads(2)\n"
+        "from vllm_qaic.v1.sample import rejection_sampler_numba as rsn\n"
+        "rsn.install()\n"
+        "import numba\n"
+        "print(torch.get_num_threads(), numba.config.NUMBA_NUM_THREADS)\n"
+    )
+    env = {
+        k: v
+        for k, v in os.environ.items()
+        if k not in ("NUMBA_NUM_THREADS", "OMP_NUM_THREADS")
+    }
+    env["NUMBA_CACHE_DIR"] = str(tmp_path / "numba_cache")
+    out = subprocess.run(
+        [sys.executable, "-c", code],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.split()
+    torch_threads, numba_max = int(out[-2]), int(out[-1])
+    if numba_max <= 2:
+        pytest.skip("host too small for the pool to change the torch thread count")
+    assert torch_threads == 2

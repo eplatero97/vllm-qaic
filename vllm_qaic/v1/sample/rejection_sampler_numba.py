@@ -435,7 +435,15 @@ def _configure_numba(threads: int) -> dict[str, Any]:
     if not numba_parallel._is_initialized:
         numba.config.THREADING_LAYER = os.environ["NUMBA_THREADING_LAYER"]
     threads = max(1, min(threads, numba.config.NUMBA_NUM_THREADS))
+    # The first numba.set_num_threads() starts Numba's OpenMP pool, which
+    # binds to torch's libgomp and calls omp_set_num_threads(NUMBA_NUM_THREADS)
+    # (the CPU count by default).  That silently undoes the worker's torch
+    # thread cap, and torch ops in the sampler then oversubscribe the host and
+    # stall for tens of ms.  Restore the caller's torch thread count.
+    torch_threads = torch.get_num_threads()
     numba.set_num_threads(threads)
+    if torch.get_num_threads() != torch_threads:
+        torch.set_num_threads(torch_threads)
     _numba_threads = threads
     return {
         "threads": threads,
