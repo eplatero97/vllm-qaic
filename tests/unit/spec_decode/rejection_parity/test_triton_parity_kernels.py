@@ -6,9 +6,7 @@
 
 Complements ``test_triton_parity_prod.py`` with int32 draft ids, a 7-row
 ragged batch with empty requests, draft ids at row edges, and odd vocab sizes
-(1, and not multiples of the 32-lane block or the 8192 Triton tile).  Each
-kernel runs with the ``parallel`` variant production uses
-(``rejection_sampler_numba``: recovered parallel, greedy/random serial).
+(1, and not multiples of the 32-lane block or the 8192 Triton tile).
 
 Tier A (``triton_parity``): skipped without triton-cpu.
 
@@ -90,9 +88,7 @@ def test_recovered(seed, vocab, no_draft, fp64, ties):
         NO_DRAFT_PROBS=no_draft,
         USE_FP64_GUMBEL=fp64,
     )
-    nrk.recovered_numba(
-        out, cu, draft, dprobs, target, inv_q, vocab, no_draft, parallel=True
-    )
+    nrk.recovered_numba(out, cu, draft, dprobs, target, inv_q, vocab, no_draft)
     torch.testing.assert_close(out, ref, rtol=0, atol=0)
 
 
@@ -145,7 +141,6 @@ def test_greedy_and_random(seed, vocab, no_draft, synthetic):
             uniform,
             rates,
             synthetic,
-            parallel=False,
         )
         torch.testing.assert_close(out, ref, rtol=0, atol=0)
 
@@ -182,7 +177,6 @@ def test_greedy_and_random(seed, vocab, no_draft, synthetic):
         rates,
         no_draft,
         synthetic,
-        parallel=False,
     )
     torch.testing.assert_close(out, ref, rtol=0, atol=0)
 

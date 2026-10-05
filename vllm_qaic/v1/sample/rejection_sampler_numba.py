@@ -229,7 +229,6 @@ def _recovered(
         inv_q,
         vocab_size,
         bool(NO_DRAFT_PROBS),
-        parallel=True,
     )
 
 

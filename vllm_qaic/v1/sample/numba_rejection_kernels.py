@@ -20,9 +20,8 @@ Semantics mirrored from upstream:
   * rejection_random_sample_kernel -> random_numba
   * sample_recovered_tokens_kernel -> recovered_numba
 
-``parallel`` selects the ``prange`` variant.  The three small kernels are
-dispatch-bound, so the serial variant is the default for them; recovered is
-vocab-bound and parallelizes over draft tokens.
+The three small kernels are dispatch-bound, so they run serially; recovered
+is vocab-bound and parallelizes over draft tokens with ``prange``.
 
 Integer inputs may be int32 or int64 (Numba specializes per dtype); stores
 narrow to the output dtype exactly like a Triton ``tl.store``.  The
@@ -118,28 +117,6 @@ def _greedy(
         )
 
 
-@njit(nogil=True, cache=True, parallel=True)
-def _greedy_par(
-    out,
-    cu,
-    draft,
-    argmax,
-    bonus,
-    is_greedy,
-    has_mask,
-    stride,
-    uniform,
-    rates,
-    synthetic,
-):
-    for req in prange(cu.shape[0]):
-        if has_mask and not is_greedy[req]:
-            continue
-        _greedy_row(
-            out, req, cu, draft, argmax, bonus, stride, uniform, rates, synthetic
-        )
-
-
 def greedy_numba(
     output,
     cu_num_draft_tokens,
@@ -151,10 +128,8 @@ def greedy_numba(
     uniform_probs,
     synthetic_rates,
     synthetic_mode,
-    parallel=False,
 ):
-    fn = _greedy_par if parallel else _greedy
-    fn(
+    _greedy(
         _np(output).reshape(-1),
         _np(cu_num_draft_tokens),
         _np(draft_token_ids),
@@ -250,42 +225,6 @@ def _random(
         )
 
 
-@njit(nogil=True, cache=True, parallel=True)
-def _random_par(
-    out,
-    cu,
-    draft,
-    draft_probs,
-    target_probs,
-    bonus,
-    recovered,
-    uniform,
-    is_greedy,
-    stride,
-    rates,
-    no_draft_probs,
-    synthetic,
-):
-    for req in prange(cu.shape[0]):
-        if is_greedy[req]:
-            continue
-        _random_row(
-            out,
-            req,
-            cu,
-            draft,
-            draft_probs,
-            target_probs,
-            bonus,
-            recovered,
-            uniform,
-            stride,
-            rates,
-            no_draft_probs,
-            synthetic,
-        )
-
-
 def random_numba(
     output,
     cu_num_draft_tokens,
@@ -301,11 +240,9 @@ def random_numba(
     synthetic_rates,
     no_draft_probs,
     synthetic_mode,
-    parallel=False,
 ):
     del vocab_size  # implied by target_probs.shape
-    fn = _random_par if parallel else _random
-    fn(
+    _random(
         _np(output).reshape(-1),
         _np(cu_num_draft_tokens),
         _np(draft_token_ids),
@@ -457,19 +394,8 @@ def _token_to_req(cu, num_tokens):
     return req_of
 
 
-@njit(nogil=True, cache=True)
-def _recovered(out, cu, draft, draft_probs, target_probs, inv_q, no_draft_probs):
-    start = 0
-    for req in range(cu.shape[0]):
-        for tok in range(start, cu[req]):
-            _recovered_token(
-                out, tok, req, draft, draft_probs, target_probs, inv_q, no_draft_probs
-            )
-        start = cu[req]
-
-
 @njit(nogil=True, cache=True, parallel=True)
-def _recovered_par(out, cu, draft, draft_probs, target_probs, inv_q, no_draft_probs):
+def _recovered(out, cu, draft, draft_probs, target_probs, inv_q, no_draft_probs):
     num_tokens = cu[cu.shape[0] - 1] if cu.shape[0] else 0
     req_of = _token_to_req(cu, num_tokens)
     for tok in prange(num_tokens):
@@ -494,11 +420,9 @@ def recovered_numba(
     inv_q,
     vocab_size,
     no_draft_probs,
-    parallel=True,
 ):
     del vocab_size
-    fn = _recovered_par if parallel else _recovered
-    fn(
+    _recovered(
         _np(output),
         _np(cu_num_draft_tokens),
         _np(draft_token_ids),
