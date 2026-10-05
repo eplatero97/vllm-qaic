@@ -354,6 +354,10 @@ class _Instrumentation:
                 path = Path(self.dump_dir) / (
                     f"{os.getpid()}_{self.dump_seq:05d}_{name}_{idx:03d}.pt"
                 )
+                # Debug dumps are trusted internal artifacts containing only
+                # cloned tensors and primitive/container launch metadata;
+                # readers use weights_only=True.
+                # nosemgrep: trailofbits.python.pickles-in-pytorch.pickles-in-pytorch
                 torch.save(
                     {
                         "kernel": name,

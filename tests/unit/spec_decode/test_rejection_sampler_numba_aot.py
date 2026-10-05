@@ -203,7 +203,7 @@ def test_counters_and_dump_round_trip(_restore, monkeypatch, tmp_path):
     assert key.startswith("rejection_greedy_sample|SYNTHETIC_MODE=0|mask=none")
     assert "int64" in key and payload["kernels"][key]["calls"] == 3
     (dump_file,) = (tmp_path / "d").glob("*.pt")
-    dump = torch.load(dump_file, weights_only=False)
+    dump = torch.load(dump_file, weights_only=True)
     assert dump["kernel"] == "rejection_greedy_sample_kernel"
     assert dump["impl"] == impl and dump["grid"] == (2,)
     assert dump["args"][0].tolist() == [[-1, -1, -1]] * 2  # cloned pre-call

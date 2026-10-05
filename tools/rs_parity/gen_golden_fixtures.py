@@ -178,7 +178,7 @@ def curated_dump_cases(common, dumps: Path) -> list[dict[str, Any]]:
     if not files:
         raise SystemExit(f"no *.pt dumps under {dumps}")
     for f in files:
-        d = torch.load(f, map_location="cpu", weights_only=False)
+        d = torch.load(f, map_location="cpu", weights_only=True)
         key = _dump_key(d)
         cand = (f.stat().st_size, str(f.relative_to(dumps)))
         if key not in best or cand < best[key]:
@@ -186,7 +186,7 @@ def curated_dump_cases(common, dumps: Path) -> list[dict[str, Any]]:
     cases = []
     for key in sorted(best):
         rel = best[key][1]
-        d = torch.load(dumps / rel, map_location="cpu", weights_only=False)
+        d = torch.load(dumps / rel, map_location="cpu", weights_only=True)
         name, grid, kwargs = d["kernel"], tuple(d["grid"]), dict(d["kwargs"])
         args = list(d["args"])
         notes = _sanitize(name, args)
@@ -664,6 +664,10 @@ def _deflate_torch_save(obj: Any, path: Path) -> None:
     import torch
 
     buf = io.BytesIO()
+    # The established fixture format is a trusted internal artifact. Its
+    # payload is tensors plus primitive/container metadata and is read with
+    # weights_only=True above and by the parity tests.
+    # nosemgrep: trailofbits.python.pickles-in-pytorch.pickles-in-pytorch
     torch.save(obj, buf)
     buf.seek(0)
     with zipfile.ZipFile(buf) as zin, zipfile.ZipFile(path, "w") as zout:
