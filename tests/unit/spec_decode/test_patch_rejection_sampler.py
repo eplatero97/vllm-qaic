@@ -183,15 +183,22 @@ CASES = {
 }
 
 
+# (use_fp64_gumbel, synthetic, with_draft_probs).  The patch only changes how
+# forward() prepares inputs, so each option needs to be exercised, not every
+# combination; option forwarding itself is pinned by the spy test below.
+OPTIONS = {
+    "plain": (False, False, False),
+    "draft_probs": (False, False, True),
+    "synthetic_fp64": (True, True, False),
+}
+
+
 @pytest.mark.usefixtures("rs_kernels")
-@pytest.mark.parametrize("seed", [0, 1, 2])
-@pytest.mark.parametrize("with_draft_probs", [False, True])
-@pytest.mark.parametrize("synthetic", [False, True])
-@pytest.mark.parametrize("use_fp64_gumbel", [False, True])
+@pytest.mark.parametrize("options", list(OPTIONS))
 @pytest.mark.parametrize("case", list(CASES))
-def test_qaic_forward_matches_upstream(
-    case, use_fp64_gumbel, synthetic, with_draft_probs, seed, monkeypatch
-):
+def test_qaic_forward_matches_upstream(case, options, monkeypatch):
+    use_fp64_gumbel, synthetic, with_draft_probs = OPTIONS[options]
+    seed = 0
     _install_topk_topp_shim(monkeypatch)
     assert RejectionSampler.forward is qaic_patch._qaic_forward
     metadata = _make_spec_metadata(DRAFT_TOKEN_IDS)

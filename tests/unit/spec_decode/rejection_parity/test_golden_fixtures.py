@@ -69,12 +69,13 @@ def test_fixture_file_integrity():
     assert META["num_cases"] == len(CASES)
 
 
-@pytest.mark.parametrize("name", list(CASES))
-def test_case_sha256(name):
-    case = CASES[name]
-    recorded = {c["name"]: c["sha256"] for c in META["cases"]}[name]
-    assert case["sha256"] == recorded
-    assert common.case_sha256(case) == recorded, "fixture case content corrupted"
+def test_case_sha256():
+    recorded = {c["name"]: c["sha256"] for c in META["cases"]}
+    for name, case in CASES.items():
+        assert case["sha256"] == recorded[name], name
+        assert common.case_sha256(case) == recorded[name], (
+            f"{name}: fixture case content corrupted"
+        )
 
 
 def test_inventory_covers_every_kernel_and_e2e():

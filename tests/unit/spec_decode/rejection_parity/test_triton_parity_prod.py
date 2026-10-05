@@ -4,19 +4,19 @@
 # ------------------------------------------------------------------
 """Bit-exact Numba-vs-Triton tests on AOT *production* dtypes and call layouts.
 
-Complements ``test_numba_rejection_kernels.py`` (int32 draft ids, int32 expand
+Complements ``test_triton_parity_kernels.py`` (int32 draft ids, int32 expand
 input).  Every case builds the positional args exactly as the upstream call
 sites in ``vllm/v1/sample/rejection_sampler.py`` (v0.23.0) do, with the AOT
 dtypes (draft int64, cu int32, bonus int32 [B,1], argmax int64, output int32
 [B,K+1], recovered int64, uniform fp64, target/draft probs fp32, inv_q fp32 or
 fp64, temperature/top_p fp32, top_k int32), launches the real upstream Triton
 ``JITFunction`` with ``kernel[grid](*args, **kwargs)``, and compares with
-``torch.equal`` against:
-
-* ``raw``  -- ``vllm_qaic.v1.sample.numba_rejection_kernels``, through an
-  upstream-layout adapter;
-* ``prod`` -- the wrappers that
-  ``vllm_qaic.v1.sample.rejection_sampler_numba.install()`` installs.
+``torch.equal`` against the wrappers that
+``vllm_qaic.v1.sample.rejection_sampler_numba.install()`` installs (``prod``).
+Add ``"raw"`` to ``IMPLS`` to also run the bare
+``vllm_qaic.v1.sample.numba_rejection_kernels`` functions through an
+upstream-layout adapter, e.g. to tell a wrapper bug from a kernel bug; the
+golden-fixture tier replays both on every run.
 
 Tier A (``triton_parity``): skipped without triton-cpu.
 
@@ -42,7 +42,7 @@ PROD_VOCAB = 128256
 HEAVY = os.environ.get("RS_PROD_HEAVY", "1") != "0"
 
 _WRAPPERS = common.production_wrappers()
-IMPLS = ("raw", "prod")
+IMPLS = ("prod",)
 
 
 @pytest.fixture(autouse=True)
@@ -348,10 +348,16 @@ def test_recovered_inf_inv_q_tie():
         "inf"
     )  # all have target prob > 0 (peaked softmax)
     for impl in IMPLS:
-        ref = _check(impl, "sample_recovered_tokens_kernel", *c.recovered_args(False))
-        ref = _check(impl, "sample_recovered_tokens_kernel", *c.recovered_args(True))
-    # +inf scores beat everything; ties -> first index (unless it is the draft column).
-    assert set(ref.tolist()) <= {17, 400}
+        for no_draft in (False, True):
+            ref = _check(
+                impl, "sample_recovered_tokens_kernel", *c.recovered_args(no_draft)
+            )
+            # Without draft probs, +inf scores beat everything; ties -> first
+            # index (unless it is the draft column).  With draft probs,
+            # max(target - draft, 0) can zero those columns (0 * inf = NaN, see
+            # test_recovered_nan_score_documented), so only parity holds.
+            if no_draft:
+                assert set(ref.tolist()) <= {17, 400}, ref.tolist()
 
 
 def _nan_case(no_draft):

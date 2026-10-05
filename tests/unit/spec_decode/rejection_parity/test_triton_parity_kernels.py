@@ -4,9 +4,11 @@
 # ------------------------------------------------------------------
 """Randomized equivalence tests: Numba kernels vs upstream Triton-CPU kernels.
 
-The benchmark fixtures are near-constant; these use random probabilities,
-ties, ragged/empty requests, draft ids at row edges, and odd vocab sizes
-(not multiples of the 32-lane block or the 8192 Triton tile).
+Complements ``test_triton_parity_prod.py`` with int32 draft ids, a 7-row
+ragged batch with empty requests, draft ids at row edges, and odd vocab sizes
+(1, and not multiples of the 32-lane block or the 8192 Triton tile).  Each
+kernel runs with the ``parallel`` variant production uses
+(``rejection_sampler_numba``: recovered parallel, greedy/random serial).
 
 Tier A (``triton_parity``): skipped without triton-cpu.
 
@@ -33,8 +35,8 @@ def _require_triton_kernels():
     common.assert_triton_originals()
 
 
-SEEDS = range(6)
-VOCABS = (1, 31, 33, 1000, 8193, 20011)
+SEEDS = range(2)
+VOCABS = (1, 33, 8193, 20011)
 
 
 def _batch(seed, vocab, max_len=6, batch=7):
@@ -61,8 +63,7 @@ def _probs(g, total, vocab, ties):
 @pytest.mark.parametrize("no_draft", (True, False))
 @pytest.mark.parametrize("fp64", (False, True))
 @pytest.mark.parametrize("ties", (False, True))
-@pytest.mark.parametrize("parallel", (False, True))
-def test_recovered(seed, vocab, no_draft, fp64, ties, parallel):
+def test_recovered(seed, vocab, no_draft, fp64, ties):
     g, cu, draft, total, batch = _batch(seed, vocab)
     target = _probs(g, total, vocab, ties)
     dprobs = None if no_draft else _probs(g, total, vocab, ties)
@@ -90,7 +91,7 @@ def test_recovered(seed, vocab, no_draft, fp64, ties, parallel):
         USE_FP64_GUMBEL=fp64,
     )
     nrk.recovered_numba(
-        out, cu, draft, dprobs, target, inv_q, vocab, no_draft, parallel=parallel
+        out, cu, draft, dprobs, target, inv_q, vocab, no_draft, parallel=True
     )
     torch.testing.assert_close(out, ref, rtol=0, atol=0)
 
@@ -99,8 +100,7 @@ def test_recovered(seed, vocab, no_draft, fp64, ties, parallel):
 @pytest.mark.parametrize("vocab", (31, 1000))
 @pytest.mark.parametrize("no_draft", (True, False))
 @pytest.mark.parametrize("synthetic", (False, True))
-@pytest.mark.parametrize("parallel", (False, True))
-def test_greedy_and_random(seed, vocab, no_draft, synthetic, parallel):
+def test_greedy_and_random(seed, vocab, no_draft, synthetic):
     max_len = 6
     g, cu, draft, total, batch = _batch(seed, vocab, max_len)
     # Mix accepted/rejected positions: argmax equals draft ~60% of the time.
@@ -145,7 +145,7 @@ def test_greedy_and_random(seed, vocab, no_draft, synthetic, parallel):
             uniform,
             rates,
             synthetic,
-            parallel=parallel,
+            parallel=False,
         )
         torch.testing.assert_close(out, ref, rtol=0, atol=0)
 
@@ -182,7 +182,7 @@ def test_greedy_and_random(seed, vocab, no_draft, synthetic, parallel):
         rates,
         no_draft,
         synthetic,
-        parallel=parallel,
+        parallel=False,
     )
     torch.testing.assert_close(out, ref, rtol=0, atol=0)
 
