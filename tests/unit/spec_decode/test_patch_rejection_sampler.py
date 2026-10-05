@@ -22,7 +22,6 @@ os.environ.setdefault("TRITON_CPU_BACKEND", "1")
 import pytest
 import torch
 
-import vllm.v1.sample.ops.topk_topp_sampler as topk_topp_sampler
 import vllm.v1.sample.rejection_sampler as upstream_rs
 from vllm.v1.sample.logits_processor import LogitsProcessors
 from vllm.v1.sample.metadata import SamplingMetadata
@@ -31,7 +30,7 @@ from vllm.v1.sample.sampler import Sampler
 from vllm.v1.spec_decode.metadata import SpecDecodeMetadata
 
 import vllm_qaic.patch.patch_rejection_sampler as qaic_patch
-from vllm_qaic.v1.sample import topk_topp_sampler_shim
+from vllm_qaic.patch import patch_topk_topp_sampler
 
 from .rejection_parity._triton_probe import has_triton_cpu  # noqa: E402
 
@@ -144,20 +143,9 @@ def _make_rejection_sampler(
 
 
 def _install_topk_topp_shim(monkeypatch) -> None:
-    """Install the top-k/top-p shim reversibly, as QAIC workers do.
-
-    Without it, >= 8-row top-k/top-p on the AOT platform selects the Triton
-    kernel, which calls the unavailable ``num_compute_units``.
-    """
-    # Without triton upstream never defines it; raising=False also undoes that.
-    monkeypatch.setattr(
-        topk_topp_sampler,
-        "apply_top_k_top_p_triton",
-        getattr(topk_topp_sampler, "apply_top_k_top_p_triton", None),
-        raising=False,
-    )
-    monkeypatch.setattr(topk_topp_sampler_shim, "_shim_installed", False)
-    topk_topp_sampler_shim.install()
+    """Ensure the centralized AOT top-k/top-p patch is active for this test."""
+    monkeypatch.setattr(patch_topk_topp_sampler, "_installed", False)
+    patch_topk_topp_sampler.install()
 
 
 def _run(forward, sampler, metadata, logits, draft_probs, sampling_kwargs):
@@ -281,42 +269,3 @@ def test_rejection_sample_receives_constrained_logits_and_options(monkeypatch):
     assert kwargs["synthetic_mode"] is True
     assert kwargs["synthetic_conditional_rates"] is sampler.synthetic_conditional_rates
     assert kwargs["use_fp64_gumbel"] is True
-
-
-def test_topk_topp_shim_avoids_num_compute_units(monkeypatch):
-    from vllm.platforms import current_platform
-    from vllm.triton_utils import HAS_TRITON
-
-    def _unavailable(cls, device_id: int = 0) -> int:
-        raise NotImplementedError("num_compute_units is not available in AOT mode.")
-
-    monkeypatch.setattr(
-        type(current_platform), "num_compute_units", classmethod(_unavailable)
-    )
-    # Snapshot the unshimmed state so the shim is undone after the test.
-    # Without triton upstream never defines it; raising=False also undoes that.
-    monkeypatch.setattr(
-        topk_topp_sampler,
-        "apply_top_k_top_p_triton",
-        getattr(topk_topp_sampler, "apply_top_k_top_p_triton", None),
-        raising=False,
-    )
-    monkeypatch.setattr(topk_topp_sampler_shim, "_shim_installed", False)
-
-    g = torch.Generator().manual_seed(0)
-    logits = torch.randn(16, VOCAB_SIZE, generator=g)
-    k = torch.full((16,), 5, dtype=torch.int32)
-    p = torch.full((16,), 0.9)
-
-    if HAS_TRITON and not current_platform.is_cpu():
-        # Control: without the shim, >= 8 rows select the Triton kernel, which
-        # sizes its grid with num_compute_units.
-        with pytest.raises(NotImplementedError):
-            topk_topp_sampler.apply_top_k_top_p(logits.clone(), k, p)
-
-    topk_topp_sampler_shim.install()
-    assert topk_topp_sampler_shim._shim_installed
-    out = topk_topp_sampler.apply_top_k_top_p(logits.clone(), k, p)
-    expected = topk_topp_sampler.apply_top_k_top_p_pytorch(logits.clone(), k, p)
-    assert torch.equal(out, expected)
-    assert torch.isfinite(out).sum(-1).le(5).all()
