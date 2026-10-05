@@ -22,8 +22,9 @@ AOT (Ahead-of-Time) mode uses the QEfficient library to compile models into Qual
     # Pin transformers version
     TRANSFORMERS_VERSION_AOT=4.55.3 ./scripts/install.sh aot
 
-    # Optional: triton-cpu backend — only for the Numba/Triton rejection-sampler
-    # parity tests (not needed for Speculative Decoding, which uses Numba)
+    # Dedicated parity environment: triton-cpu is required for mandatory
+    # Tier A Numba/Triton rejection-sampler parity tests. It is not needed for
+    # normal AOT serving or Speculative Decoding, which uses Numba.
     # triton-cpu is a large C++ build — requires ~10 GB of free disk space at TRITON_CPU_SRC
     TRITON_CPU=1 ./scripts/install.sh aot
 

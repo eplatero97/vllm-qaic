@@ -8,8 +8,8 @@ Speculative decoding (SpD) accelerates token generation by using a fast proposer
 !!! note "AOT rejection sampler runs on Numba"
     In AOT mode, the host-side rejection sampler runs on Numba (pinned in the AOT
     requirements and installed by `./scripts/install.sh aot`). No triton-cpu backend
-    is needed for SpD; `TRITON_CPU=1` is an optional extra used only by the
-    Numba/Triton rejection-sampler parity tests.
+    is needed for SpD or normal AOT serving. The dedicated parity environment must
+    be installed with `TRITON_CPU=1` to run mandatory Tier A Numba/Triton tests.
 
 ## Methods
 

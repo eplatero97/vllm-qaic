@@ -17,12 +17,8 @@ needed: without triton the upstream globals are uncallable placeholders, so
 Debug-only instrumentation (adds per-launch overhead):
 
 * ``VLLM_QAIC_RS_COUNTERS=1`` -- count launches per (kernel, constexpr combo,
-  dtype signature, batch, token bucket) plus kernel/forward wall time, dumped
+  dtype signature, batch, token bucket) plus kernel/forward wall time, written
   as JSON to ``$VLLM_QAIC_RS_COUNTERS_DIR/rs_counters_<pid>.json``.
-* ``VLLM_QAIC_RS_DUMP=<dir>`` -- ``torch.save`` the inputs and output of the
-  first ``VLLM_QAIC_RS_DUMP_STEPS`` (default 4) launches per combo, for offline
-  Triton-vs-Numba replay and tier-B fixture generation
-  (``tools/rs_parity/gen_golden_fixtures.py``).
 """
 
 from __future__ import annotations
@@ -258,7 +254,7 @@ _NUMBA_FNS = {
 
 
 # --------------------------------------------------------------------------
-# Debug instrumentation (counters, dumps)
+# Debug instrumentation (counters)
 # --------------------------------------------------------------------------
 class _Instrumentation:
     def __init__(self, impl: str):
@@ -270,25 +266,20 @@ class _Instrumentation:
         )
         if self.counters_dir is not None and not self.counters_dir:
             self.counters_dir = os.getcwd()
-        self.dump_dir = os.environ.get("VLLM_QAIC_RS_DUMP") or None
-        self.dump_steps = int(os.environ.get("VLLM_QAIC_RS_DUMP_STEPS", "4"))
         self.counts: dict[str, dict[str, float]] = defaultdict(
             lambda: {"calls": 0, "ns": 0}
         )
-        self.dumped: dict[str, int] = defaultdict(int)
-        self.dump_seq = 0
         self.forward = {"calls": 0, "ns": 0}
         self.calls = 0
         self.lock = threading.Lock()
-        for d in (self.counters_dir, self.dump_dir):
-            if d:
-                Path(d).mkdir(parents=True, exist_ok=True)
+        if self.counters_dir:
+            Path(self.counters_dir).mkdir(parents=True, exist_ok=True)
         if self.counters_dir:
             atexit.register(self.flush)
 
     @property
     def enabled(self) -> bool:
-        return bool(self.counters_dir or self.dump_dir)
+        return bool(self.counters_dir)
 
     @staticmethod
     def combo(name: str, grid, args, kwargs) -> str:
@@ -326,9 +317,6 @@ class _Instrumentation:
 
     def record(self, name, grid, launch, args, kwargs):
         combo = self.combo(name, grid, args, kwargs)
-        snapshot = None
-        if self.dump_dir and self.dumped[combo] < self.dump_steps:
-            snapshot = [a.clone() if isinstance(a, torch.Tensor) else a for a in args]
         t0 = time.perf_counter_ns()
         result = launch(*args, **kwargs)
         dt = time.perf_counter_ns() - t0
@@ -346,29 +334,6 @@ class _Instrumentation:
             entry = self.counts[key]
             entry["max_T"] = max(entry.get("max_T", 0), num_tokens)
             self.calls += 1
-            if snapshot is not None:
-                assert self.dump_dir is not None
-                idx = self.dumped[combo]
-                self.dumped[combo] += 1
-                self.dump_seq += 1
-                path = Path(self.dump_dir) / (
-                    f"{os.getpid()}_{self.dump_seq:05d}_{name}_{idx:03d}.pt"
-                )
-                # Debug dumps are trusted internal artifacts containing only
-                # cloned tensors and primitive/container launch metadata;
-                # readers use weights_only=True.
-                # nosemgrep: trailofbits.python.pickles-in-pytorch.pickles-in-pytorch
-                torch.save(
-                    {
-                        "kernel": name,
-                        "grid": tuple(grid),
-                        "args": snapshot,
-                        "kwargs": dict(kwargs),
-                        "out_after": args[0].clone(),
-                        "impl": self.impl,
-                    },
-                    path,
-                )
             if self.counters_dir and self.calls % 200 == 0:
                 self.flush()
         return result
@@ -486,9 +451,7 @@ def install() -> str:
         kernels = {n: instr.wrap(n, k) for n, k in kernels.items()}
         _wrap_forward(rs, instr)
         _instrumentation = instr
-        detail += (
-            f", counters={instr.counters_dir}, dump={instr.dump_dir}x{instr.dump_steps}"
-        )
+        detail += f", counters={instr.counters_dir}"
     for n, k in kernels.items():
         setattr(rs, n, k)
     _installed = True

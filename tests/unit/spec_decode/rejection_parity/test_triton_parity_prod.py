@@ -15,8 +15,7 @@ fp64, temperature/top_p fp32, top_k int32), launches the real upstream Triton
 ``vllm_qaic.v1.sample.rejection_sampler_numba.install()`` installs (``prod``).
 Add ``"raw"`` to ``IMPLS`` to also run the bare
 ``vllm_qaic.v1.sample.numba_rejection_kernels`` functions through an
-upstream-layout adapter, e.g. to tell a wrapper bug from a kernel bug; the
-golden-fixture tier replays both on every run.
+upstream-layout adapter, e.g. to tell a wrapper bug from a kernel bug.
 
 Tier A (``triton_parity``): skipped without triton-cpu.
 

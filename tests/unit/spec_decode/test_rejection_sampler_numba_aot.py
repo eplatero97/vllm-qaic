@@ -6,7 +6,7 @@
 
 Bit-equivalence of the Numba kernels against triton-cpu is covered by
 tests/unit/spec_decode/rejection_parity/; these tests cover
-install/uninstall, validation guards and debug instrumentation.
+install/uninstall, validation guards and counter instrumentation.
 """
 
 import json
@@ -28,8 +28,6 @@ def _restore(monkeypatch, tmp_path):
         rsn._REMOVED_IMPL_ENV,
         "VLLM_QAIC_RS_COUNTERS",
         "VLLM_QAIC_RS_COUNTERS_DIR",
-        "VLLM_QAIC_RS_DUMP",
-        "VLLM_QAIC_RS_DUMP_STEPS",
     ):
         monkeypatch.delenv(var, raising=False)
     monkeypatch.setenv("NUMBA_CACHE_DIR", str(tmp_path / "numba_cache"))
@@ -184,12 +182,10 @@ def test_prewarm_numba():
     assert rsn.prewarm() > 0.0
 
 
-def test_counters_and_dump_round_trip(_restore, monkeypatch, tmp_path):
+def test_counters_json(_restore, monkeypatch, tmp_path):
     impl = "numba"
     monkeypatch.setenv("VLLM_QAIC_RS_COUNTERS", "1")
     monkeypatch.setenv("VLLM_QAIC_RS_COUNTERS_DIR", str(tmp_path / "c"))
-    monkeypatch.setenv("VLLM_QAIC_RS_DUMP", str(tmp_path / "d"))
-    monkeypatch.setenv("VLLM_QAIC_RS_DUMP_STEPS", "1")
     rsn.install()
     assert rs.RejectionSampler.forward is not _restore
     for _ in range(3):
@@ -202,12 +198,6 @@ def test_counters_and_dump_round_trip(_restore, monkeypatch, tmp_path):
     (key,) = payload["kernels"]
     assert key.startswith("rejection_greedy_sample|SYNTHETIC_MODE=0|mask=none")
     assert "int64" in key and payload["kernels"][key]["calls"] == 3
-    (dump_file,) = (tmp_path / "d").glob("*.pt")
-    dump = torch.load(dump_file, weights_only=True)
-    assert dump["kernel"] == "rejection_greedy_sample_kernel"
-    assert dump["impl"] == impl and dump["grid"] == (2,)
-    assert dump["args"][0].tolist() == [[-1, -1, -1]] * 2  # cloned pre-call
-    assert dump["out_after"].tolist() == [[3, 9, -1], [5, 6, 12]]
 
 
 def test_prewarm_does_not_consume_global_rng():

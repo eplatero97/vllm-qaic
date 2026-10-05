@@ -12,6 +12,11 @@ spans its first decorator through its last line, so e.g. a change of
 ``@triton.jit(do_not_specialize=...)`` is detected.  Normalization: strip
 trailing whitespace per line, ``textwrap.dedent``, strip leading/trailing
 blank lines.  No triton or torch import is needed beyond locating the file.
+
+Run this file directly to refresh the recorded hashes after mandatory Tier A
+parity has passed::
+
+    .venv_aot/bin/python tests/unit/spec_decode/rejection_parity/_upstream_sources.py
 """
 
 from __future__ import annotations
@@ -150,3 +155,22 @@ def write_recorded(path: Path = HASHES_PATH) -> dict[str, Any]:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(rec, indent=1, sort_keys=True) + "\n")
     return rec
+
+
+def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Refresh Tier C upstream hashes")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=HASHES_PATH,
+        help=f"hash file to write (default: {HASHES_PATH})",
+    )
+    args = parser.parse_args()
+    record = write_recorded(args.output)
+    print(f"wrote {args.output} for vllm {record['vllm_version']}")
+
+
+if __name__ == "__main__":
+    main()

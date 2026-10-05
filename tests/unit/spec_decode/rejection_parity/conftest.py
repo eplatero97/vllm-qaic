@@ -5,11 +5,9 @@
 """Rejection-sampler Numba≡Triton parity tiers.
 
 * Tier A (``@pytest.mark.triton_parity``; ``test_triton_parity_*.py``):
-  differential tests against the real upstream triton-cpu kernels.  Skipped
-  (with a loud summary banner) when triton-cpu is unavailable, or an error
-  when ``VLLM_QAIC_REQUIRE_TRITON_PARITY=1``.
-* Tier B (``test_golden_fixtures.py``): Numba vs Triton outputs recorded in
-  ``fixtures/rs_golden_v1.pt``; no triton needed.
+  mandatory differential tests against the real upstream triton-cpu kernels.
+  Skipped (with a loud summary banner) when triton-cpu is unavailable, or an
+  error when ``VLLM_QAIC_REQUIRE_TRITON_PARITY=1``.
 * Tier C (``test_upstream_drift_guard.py``): source hashes of the upstream
   kernels and call sites; no triton needed.
 
@@ -75,12 +73,12 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
     )
     tr.write_line(f"!!  ({TRITON_CPU_REASON})", red=True, bold=True)
     tr.write_line(
-        "!!  Only the golden-fixture (tier B) and drift-guard (tier C) checks ran.",
+        "!!  Only the drift-guard (tier C) checks ran; tier A was not verified.",
         red=True,
         bold=True,
     )
     tr.write_line(
-        f"!!  Run in a triton-cpu venv with {REQUIRE_ENV}=1 to verify parity.",
+        f"!!  Run mandatory tier A in a triton-cpu venv with {REQUIRE_ENV}=1.",
         red=True,
         bold=True,
     )

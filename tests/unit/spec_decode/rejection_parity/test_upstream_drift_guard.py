@@ -11,9 +11,9 @@ and the module constants with
 module *file*, so they are identical with real triton-cpu ``JITFunction``
 kernels and under vLLM's ``TritonPlaceholder``.
 
-Refresh (after re-verifying tiers A and B)::
+Refresh (after re-verifying mandatory tier A)::
 
-    .venv_aot/bin/python tools/rs_parity/gen_golden_fixtures.py --update-hashes
+    .venv_aot/bin/python tests/unit/spec_decode/rejection_parity/_upstream_sources.py
 """
 
 from __future__ import annotations
@@ -27,10 +27,10 @@ RECORDED = us.load_recorded()
 CURRENT = us.current_record()
 
 REMEDY = (
-    "Run tier A in a triton-cpu venv (VLLM_QAIC_REQUIRE_TRITON_PARITY=1 pytest -s "
-    "tests/unit/spec_decode/rejection_parity), regenerate tier B (python "
-    "tools/rs_parity/gen_golden_fixtures.py), then refresh hashes (python "
-    "tools/rs_parity/gen_golden_fixtures.py --update-hashes)."
+    "Run mandatory tier A in the dedicated triton-cpu parity environment "
+    "(VLLM_QAIC_REQUIRE_TRITON_PARITY=1 pytest -s -q "
+    "tests/unit/spec_decode/rejection_parity), then refresh tier C hashes with "
+    "python tests/unit/spec_decode/rejection_parity/_upstream_sources.py."
 )
 
 
