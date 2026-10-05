@@ -44,9 +44,10 @@ _EMPTY_F32_2D = np.zeros((0, 0), dtype=np.float32)
 
 def _np(t: torch.Tensor) -> np.ndarray:
     # A non-contiguous output would make reshape(-1) copy and silently drop
-    # writes; bf16/fp16 have no NumPy view.  Fail loudly on both.
+    # writes; .numpy() itself rejects non-CPU tensors and bf16.  Dtypes are
+    # allowlisted by rejection_sampler_numba._check.
     if not t.is_contiguous():
-        raise ValueError("numba rejection kernels require contiguous tensors")
+        raise ValueError("numba rejection kernels require contiguous CPU tensors")
     return t.detach().numpy()
 
 

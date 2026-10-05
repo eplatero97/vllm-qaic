@@ -44,12 +44,6 @@ def _restore(monkeypatch, tmp_path):
     assert rs.RejectionSampler.forward is forward
 
 
-def test_envs_no_longer_declares_selector():
-    import vllm_qaic.envs as envs
-
-    assert rsn._REMOVED_IMPL_ENV not in envs.qaic_environment_variables
-
-
 def test_install_swaps_and_uninstall_restores(_restore):
     assert rsn.install() == "numba"
     for n in rsn.KERNEL_NAMES:
@@ -89,7 +83,7 @@ def test_install_fails_loudly_without_numba(monkeypatch):
     assert not rsn._installed
 
 
-def test_expand_matches_reference_through_upstream_helper(monkeypatch):
+def test_expand_matches_reference_through_upstream_helper():
     rsn.install()
     temp = torch.tensor([0.0, 0.7, 1.3], dtype=torch.float32)
     cu = torch.tensor([2, 2, 5], dtype=torch.int32)
@@ -111,7 +105,7 @@ def _greedy_args(draft_dtype=torch.int64):
     return [out, cu, draft, argmax, bonus, None, 2, None, None]
 
 
-def test_greedy_int64_production_dtypes(monkeypatch):
+def test_greedy_int64_production_dtypes():
     rsn.install()
     args = _greedy_args()
     rs.rejection_greedy_sample_kernel[(2,)](*args, SYNTHETIC_MODE=False)
@@ -119,31 +113,48 @@ def test_greedy_int64_production_dtypes(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "mutate,exc",
+    "mutate,exc,match",
     [
-        (lambda a: a.__setitem__(2, a[2].to(torch.float32)), TypeError),
-        (lambda a: a.__setitem__(3, a[3].to(torch.int16)), TypeError),
+        # Dtype allowlist (_check): only prewarmed, parity-covered dtypes.
+        (
+            lambda a: a.__setitem__(2, a[2].to(torch.float32)),
+            TypeError,
+            "draft_token_ids has unsupported dtype",
+        ),
+        (
+            lambda a: a.__setitem__(3, a[3].to(torch.int16)),
+            TypeError,
+            "target_argmax has unsupported dtype",
+        ),
+        (
+            lambda a: a.__setitem__(7, torch.rand(4, dtype=torch.float32)),
+            TypeError,
+            "uniform_probs has unsupported dtype",
+        ),
+        # Contiguity / device are enforced by numba_rejection_kernels._np.
         (
             lambda a: a.__setitem__(0, torch.full((3, 2), -1, dtype=torch.int32).t()),
             ValueError,
+            "contiguous",
         ),
         (
             lambda a: a.__setitem__(
                 2, torch.empty(4, dtype=torch.int64, device="meta")
             ),
-            ValueError,
+            TypeError,
+            "meta",
         ),
     ],
 )
-def test_guards_raise(monkeypatch, mutate, exc):
+def test_guards_raise(mutate, exc, match):
     rsn.install()
     args = _greedy_args()
     mutate(args)
-    with pytest.raises(exc):
+    with pytest.raises(exc, match=match):
         rs.rejection_greedy_sample_kernel[(2,)](*args, SYNTHETIC_MODE=False)
 
 
-def test_recovered_rejects_wrong_inv_q_dtype(monkeypatch):
+def test_recovered_rejects_wrong_inv_q_dtype():
     rsn.install()
     cu = torch.tensor([2], dtype=torch.int32)
     draft = torch.zeros(2, dtype=torch.int64)
@@ -168,7 +179,7 @@ def test_prewarm_noop_before_install():
     assert rsn.prewarm() == 0.0
 
 
-def test_prewarm_numba(monkeypatch):
+def test_prewarm_numba():
     rsn.install()
     assert rsn.prewarm() > 0.0
 
@@ -199,7 +210,7 @@ def test_counters_and_dump_round_trip(_restore, monkeypatch, tmp_path):
     assert dump["out_after"].tolist() == [[3, 9, -1], [5, 6, 12]]
 
 
-def test_prewarm_does_not_consume_global_rng(monkeypatch):
+def test_prewarm_does_not_consume_global_rng():
     # The worker seeds the global RNG before warm-up; prewarm must not shift
     # the stream unseeded requests later sample from.
     rsn.install()

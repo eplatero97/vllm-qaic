@@ -68,21 +68,19 @@ _FLOAT = (torch.float32, torch.float64)
 
 
 def _check(name: str, t: torch.Tensor | None, dtypes: tuple, optional=False):
+    # Dtype allowlist only: these are the dtypes prewarm() compiles and the
+    # Triton parity suites cover, so anything else would JIT-compile mid-serving
+    # with unverified numerics.  Device / contiguity are enforced by
+    # numba_rejection_kernels._np (via .numpy()).
     if t is None:
         if optional:
             return
         raise ValueError(f"numba rejection sampler: {name} must not be None")
-    if t.device.type != "cpu":
-        raise ValueError(
-            f"numba rejection sampler: {name} is on {t.device}; only CPU is supported"
-        )
     if t.dtype not in dtypes:
         raise TypeError(
             f"numba rejection sampler: {name} has unsupported dtype {t.dtype}; "
             f"expected one of {dtypes}"
         )
-    if not t.is_contiguous():
-        raise ValueError(f"numba rejection sampler: {name} must be contiguous")
 
 
 def _ensure_numba_threads() -> None:
@@ -131,7 +129,7 @@ def _greedy(
     _check("target_argmax", argmax, _INT)
     _check("bonus_token_ids", bonus, _INT)
     _check("is_greedy", is_greedy, (torch.bool,), optional=True)
-    _check("uniform_probs", uniform, _FLOAT, optional=True)
+    _check("uniform_probs", uniform, (torch.float64,), optional=True)
     _check("synthetic_conditional_rates", rates, (torch.float32,), optional=True)
     if SYNTHETIC_MODE and (uniform is None or rates is None):
         raise ValueError("SYNTHETIC_MODE requires uniform_probs and rates")
@@ -174,7 +172,7 @@ def _random(
     _check("target_probs", target_probs, (torch.float32,))
     _check("bonus_token_ids", bonus, _INT)
     _check("recovered_token_ids", recovered, _INT)
-    _check("uniform_probs", uniform, _FLOAT)
+    _check("uniform_probs", uniform, (torch.float64,))
     _check("is_greedy", is_greedy, (torch.bool,))
     _check("synthetic_conditional_rates", rates, (torch.float32,), optional=True)
     if SYNTHETIC_MODE and rates is None:
