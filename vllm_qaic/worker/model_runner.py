@@ -415,8 +415,6 @@ class QaicModelRunnerAoT(GPUModelRunner):
         | QaicDFlashProposer
         | None
     )
-    # Parent initializes this dynamically; declare its normalized bool type here.
-    use_async_scheduling: bool
 
     def __init__(
         self,
@@ -526,17 +524,11 @@ class QaicModelRunnerAoT(GPUModelRunner):
         ]
         self.num_decode_tokens = 0
         self.max_decode_tokens = compute_max_decode_tokens(self.speculative_config)
-        # Variable-K decode specializations: for ngram/suffix we compile two
-        # kernels (K=0 and K=max_k) and select the cheapest one each step.
-        # Variable-K decode specializations select the cheapest kernel each step.
+        # Variable-K methods compile K=0 and K=max. Draft-model needs K=0 only
+        # on a disaggregated consumer, whose first transferred token has no draft.
         _method = self.speculative_config.method if self.speculative_config else None
-        _kv_transfer_config = vllm_config.kv_transfer_config
-        _is_disagg_consumer = (
-            _kv_transfer_config is not None
-            and _kv_transfer_config.kv_role == "kv_consumer"
-        )
         _uses_variable_k = _method in ("ngram", "suffix") or (
-            _method == "draft_model" and _is_disagg_consumer
+            _method == "draft_model" and self.is_kv_consumer
         )
         self.decode_ks: list[int] = (
             [0, self.num_spec_tokens]
@@ -739,6 +731,13 @@ class QaicModelRunnerAoT(GPUModelRunner):
             return self.decode_ks[-1]  # proposals exist → full SpD kernel
         return 0  # no proposals → cheap fallback kernel
 
+    def _num_decode_rows_to_pad(self, num_reqs: int) -> int:
+        """Return how many leading request rows execute through the decode QPC."""
+        # A consumer can mix ordinary decode requests with newly transferred
+        # requests that the scheduler still classifies as prefill. Both groups
+        # execute through decode, so every consumer row needs the same MDT shape.
+        return num_reqs if self.is_kv_consumer else self.num_decodes
+
     def _pool(
         self,
         hidden_states: torch.Tensor,
@@ -834,10 +833,7 @@ class QaicModelRunnerAoT(GPUModelRunner):
             ]
             # Pad decode requests to active_k+1 tokens (1 for K=0 fallback,
             # max_decode_tokens for the full SpD kernel).
-            # KV consumers classify the first transferred token as prefill but
-            # execute it through decode; pad it like a zero-proposal request so
-            # every row has the uniform shape expected by the decode QPC.
-            num_pad_reqs = num_reqs if self.is_kv_consumer else self.num_decodes
+            num_pad_reqs = self._num_decode_rows_to_pad(num_reqs)
             num_scheduled_tokens[:num_pad_reqs] = self.active_k + 1
             total_num_scheduled_tokens = np.sum(num_scheduled_tokens)
 

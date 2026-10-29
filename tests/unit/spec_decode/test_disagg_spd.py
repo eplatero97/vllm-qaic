@@ -150,6 +150,25 @@ def test_determine_active_k_uses_single_specialization():
     assert QaicModelRunnerAoT._determine_active_k(runner, None) == 3
 
 
+@pytest.mark.parametrize(
+    ("is_kv_consumer", "num_decodes", "num_reqs", "expected"),
+    [
+        (False, 2, 3, 2),
+        (True, 2, 3, 3),
+        (True, 0, 1, 1),
+    ],
+)
+def test_num_decode_rows_to_pad_handles_mixed_consumer_batches(
+    is_kv_consumer, num_decodes, num_reqs, expected
+):
+    runner = SimpleNamespace(
+        is_kv_consumer=is_kv_consumer,
+        num_decodes=num_decodes,
+    )
+
+    assert QaicModelRunnerAoT._num_decode_rows_to_pad(runner, num_reqs) == expected
+
+
 @pytest.mark.parametrize("lora_mode", [False, True])
 def test_decode_batch_input_helper_builds_static_shapes(lora_mode):
     runner = SimpleNamespace(decode_bsz=2, lora_mode=lora_mode)
@@ -241,6 +260,8 @@ def test_compile_completion_is_deferred_when_draft_model_exists():
         "target",
         raise_on_compile_complete=False,
     )
+    assert runner.decode_ks == [0, 3]
+    assert runner.active_k == 3
     runner.drafter.load_model.assert_called_once_with()
 
 
