@@ -17,7 +17,7 @@ HARDWARE DEPENDENT: requires live QAIC devices and is not part of the
 non-hardware verification gate.
 
 Run examples:
-    pytest tests/e2e/spec_decode/test_qaic_disagg_spd.py -v \
+    pytest tests/e2e/disaggregated_serving/test_qaic_disagg_spd.py -v \
         --device-id "0,1,2,3,4,5,6,7"
 """
 
@@ -29,7 +29,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from ..disaggregated_serving.utils import get_prompts, query_server
+from .utils import get_prompts, query_server
 
 # Configure logging
 logging.basicConfig(
