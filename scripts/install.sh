@@ -13,7 +13,9 @@
 #
 # Usage:
 #   ./scripts/install.sh aot
+#   ./scripts/install.sh aot --spd
 #   ./scripts/install.sh pyt
+#   ./scripts/install.sh pyt --spd
 #
 # Install source detection:
 #   - Run from vllm-qaic repo (GitHub/Gerrit clone):
@@ -37,9 +39,23 @@ source "${SCRIPT_DIR}/utility.sh"
 
 MODE="${1:-aot}"
 shift || true
-if [[ $# -gt 0 ]]; then
-    echo "Unknown arg: $1"; exit 1
-fi
+INSTALL_SPD=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --spd)
+            if [[ "${INSTALL_SPD}" = "1" ]]; then
+                echo "ERROR: --spd may only be specified once" >&2
+                exit 1
+            fi
+            INSTALL_SPD=1
+            ;;
+        *)
+            echo "Unknown arg: $1" >&2
+            exit 1
+            ;;
+    esac
+    shift
+done
 
 if [[ "${MODE}" != "aot" && "${MODE}" != "pyt" ]]; then
     echo "ERROR: mode must be 'aot' or 'pyt'" >&2
@@ -100,6 +116,11 @@ echo "========================================================"
 echo "  vllm-qaic installer"
 echo "  mode     : ${MODE}"
 echo "  source   : ${INSTALL_SOURCE}$([ "${INSTALL_SOURCE}" = "source" ] && echo " (${REPO_ROOT})" || echo "")"
+if [ "${INSTALL_SPD}" = "1" ]; then
+    echo "  SPD deps : enabled (arctic-inference==0.1.1)"
+else
+    echo "  SPD deps : disabled"
+fi
 echo "  python   : $(${PYTHON} --version)"
 echo "  env      : $(${PYTHON} -c 'import sys; print(sys.prefix)')"
 echo "  --------------------------------------------------------"
@@ -195,9 +216,23 @@ if [ "${MODE}" = "aot" ]; then
 
     echo "=== Step 3: vllm-qaic-aot ==="
     if [ "${INSTALL_SOURCE}" = "source" ]; then
-        TORCH_QAIC_INSTALLED=0 ${PIP} install --no-build-isolation "${REPO_ROOT}"
+        if [ "${INSTALL_SPD}" = "1" ]; then
+            TORCH_QAIC_INSTALLED=0 ${PIP} install --no-build-isolation "${REPO_ROOT}[spd]"
+        else
+            TORCH_QAIC_INSTALLED=0 ${PIP} install --no-build-isolation "${REPO_ROOT}"
+        fi
     else
-        ${PIP} install "${SDK_WHEEL_DIR}"/vllm_qaic-*aot*.whl
+        if [ "${INSTALL_SPD}" = "1" ]; then
+            SDK_WHEELS=("${SDK_WHEEL_DIR}"/vllm_qaic-*aot*.whl)
+            if [ ! -f "${SDK_WHEELS[0]}" ] || [ "${#SDK_WHEELS[@]}" -ne 1 ]; then
+                echo "ERROR: expected exactly one AOT vllm-qaic wheel in ${SDK_WHEEL_DIR}" >&2
+                exit 1
+            fi
+            SDK_WHEEL_URI="$(${PYTHON} -c 'from pathlib import Path; import sys; print(Path(sys.argv[1]).resolve().as_uri())' "${SDK_WHEELS[0]}")"
+            ${PIP} install "vllm-qaic[spd] @ ${SDK_WHEEL_URI}"
+        else
+            ${PIP} install "${SDK_WHEEL_DIR}"/vllm_qaic-*aot*.whl
+        fi
     fi
 
     # Step 4 (optional): triton-cpu backend — test-only extra for the
@@ -243,9 +278,23 @@ elif [ "${MODE}" = "pyt" ]; then
 
     echo "=== Step 3: vllm-qaic-pyt ==="
     if [ "${INSTALL_SOURCE}" = "source" ]; then
-        ${PIP} install --no-build-isolation "${REPO_ROOT}"
+        if [ "${INSTALL_SPD}" = "1" ]; then
+            ${PIP} install --no-build-isolation "${REPO_ROOT}[spd]"
+        else
+            ${PIP} install --no-build-isolation "${REPO_ROOT}"
+        fi
     else
-        ${PIP} install --no-deps "${SDK_WHEEL_DIR}"/vllm_qaic-*pyt*.whl
+        if [ "${INSTALL_SPD}" = "1" ]; then
+            SDK_WHEELS=("${SDK_WHEEL_DIR}"/vllm_qaic-*pyt*.whl)
+            if [ ! -f "${SDK_WHEELS[0]}" ] || [ "${#SDK_WHEELS[@]}" -ne 1 ]; then
+                echo "ERROR: expected exactly one PYT vllm-qaic wheel in ${SDK_WHEEL_DIR}" >&2
+                exit 1
+            fi
+            SDK_WHEEL_URI="$(${PYTHON} -c 'from pathlib import Path; import sys; print(Path(sys.argv[1]).resolve().as_uri())' "${SDK_WHEELS[0]}")"
+            ${PIP} install "vllm-qaic[spd] @ ${SDK_WHEEL_URI}"
+        else
+            ${PIP} install --no-deps "${SDK_WHEEL_DIR}"/vllm_qaic-*pyt*.whl
+        fi
     fi
 fi
 

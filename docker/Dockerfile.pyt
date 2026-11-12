@@ -116,6 +116,7 @@ ARG TORCH_VERSION_PYT="2.13.0+cpu"
 ARG TORCHVISION_VERSION_PYT="0.28.0+cpu"
 ARG TORCHAUDIO_VERSION_PYT="2.11.0+cpu"
 ARG VLLM_TARGET_DEVICE_PYT="empty"
+ARG VLLM_QAIC_INSTALL_SPD="0"
 ARG TORCH_QAIC_BASE_PATH="/opt/qti-aic/integrations/torch_qaic"
 
 # ---------------------------------------------------------------------------
@@ -343,6 +344,43 @@ RUN --mount=type=cache,sharing=locked,target=/var/cache/uv \
 ENV VLLM_PLUGINS="qaic"
 
 # ===========================================================================
+# Optional suffix speculative-decoding dependency. Build the source-only
+# Arctic package in an isolated venv using this image's Python, CPU torch,
+# and platform. Only the resulting wheel is copied into downstream builders.
+# ===========================================================================
+FROM pyt-base AS arctic-inference-wheel-builder
+
+ARG VENV="/opt/venv-pyt"
+ARG TORCH_VERSION_PYT="2.13.0+cpu"
+ARG VLLM_QAIC_INSTALL_SPD="0"
+
+RUN set -euxo pipefail; \
+    case "${VLLM_QAIC_INSTALL_SPD}" in 0|1) ;; *) \
+        echo "ERROR: VLLM_QAIC_INSTALL_SPD must be 0 or 1" >&2; exit 2 ;; \
+    esac; \
+    mkdir -p /tmp/arctic_wheels; \
+    if [ "${VLLM_QAIC_INSTALL_SPD}" = "1" ]; then \
+        arctic_env=/tmp/arctic-build-env; \
+        "${VENV}/bin/python" -m venv "${arctic_env}"; \
+        "${arctic_env}/bin/python" -m pip install --upgrade pip setuptools wheel; \
+        "${arctic_env}/bin/python" -m pip install \
+            "torch==${TORCH_VERSION_PYT}" \
+            --extra-index-url https://download.pytorch.org/whl/cpu; \
+        "${arctic_env}/bin/python" -m pip install \
+            "cmake>=3.18" ninja nanobind==2.9.2 grpcio-tools; \
+        nb_dir=$("${arctic_env}/bin/python" -m nanobind --cmake_dir); \
+        export VIRTUAL_ENV="${arctic_env}" \
+            PATH="${arctic_env}/bin:${PATH}" \
+            CMAKE_ARGS="-DPython_EXECUTABLE=${arctic_env}/bin/python -DPython3_EXECUTABLE=${arctic_env}/bin/python -DPython_FIND_VIRTUALENV=ONLY -Dnanobind_ROOT=${nb_dir} -Dnanobind_DIR=${nb_dir}" \
+            CMAKE_BUILD_PARALLEL_LEVEL=16; \
+        "${arctic_env}/bin/python" -m pip wheel -v --no-build-isolation --no-deps \
+            -w /tmp/arctic_wheels arctic-inference==0.1.1; \
+        test "$(find /tmp/arctic_wheels -maxdepth 1 -name 'arctic_inference-0.1.1-*.whl' | wc -l)" -eq 1; \
+    else \
+        echo "INFO: Arctic Inference wheel build skipped (VLLM_QAIC_INSTALL_SPD=0)"; \
+    fi
+
+# ===========================================================================
 # RELEASE — non-editable install from a published git ref.
 # Clones the ref, overlays our fixed setup.py, then installs.
 # ===========================================================================
@@ -353,15 +391,26 @@ ARG VLLM_VERSION="0.23.0"
 ARG VLLM_QAIC_VERSION="1.23"
 ARG VLLM_QAIC_GIT_REF="v0.23.0"
 ARG QAIC_DEVICE_ARCH="v68"
+ARG VLLM_QAIC_INSTALL_SPD="0"
 
+COPY --from=arctic-inference-wheel-builder /tmp/arctic_wheels/ /tmp/arctic_wheels/
 COPY setup.py /src/vllm-qaic-setup.py
 RUN --mount=type=cache,sharing=locked,target=/var/cache/uv \
     git clone --branch "${VLLM_QAIC_GIT_REF}" --depth 1 \
         https://github.com/qualcomm/vllm-qaic.git /src/vllm-qaic-release && \
     cp /src/vllm-qaic-setup.py /src/vllm-qaic-release/setup.py && \
-    QAIC_DEVICE_ARCH="${QAIC_DEVICE_ARCH}" \
-    VLLM_VERSION_OVERRIDE="${VLLM_VERSION}+pyt${VLLM_QAIC_VERSION}" \
-    uv pip install --no-build-isolation /src/vllm-qaic-release
+    if [ "${VLLM_QAIC_INSTALL_SPD}" = "1" ]; then \
+        arctic_wheel="$(find /tmp/arctic_wheels -maxdepth 1 -name 'arctic_inference-0.1.1-*.whl' -print -quit)" && \
+        test -n "${arctic_wheel}" && \
+        uv pip install "${arctic_wheel}" && \
+        QAIC_DEVICE_ARCH="${QAIC_DEVICE_ARCH}" \
+        VLLM_VERSION_OVERRIDE="${VLLM_VERSION}+pyt${VLLM_QAIC_VERSION}" \
+        uv pip install --no-build-isolation "/src/vllm-qaic-release[spd]"; \
+    else \
+        QAIC_DEVICE_ARCH="${QAIC_DEVICE_ARCH}" \
+        VLLM_VERSION_OVERRIDE="${VLLM_VERSION}+pyt${VLLM_QAIC_VERSION}" \
+        uv pip install --no-build-isolation /src/vllm-qaic-release; \
+    fi
 
 # hadolint ignore=DL3006
 FROM ${BASE_IMAGE} AS release
@@ -388,8 +437,10 @@ ARG VLLM_QAIC_VERSION="1.23"
 ARG VLLM_QAIC_PR=""
 ARG VLLM_QAIC_BRANCH=""
 ARG QAIC_DEVICE_ARCH="v68"
+ARG VLLM_QAIC_INSTALL_SPD="0"
 
 COPY . /src/vllm-qaic
+COPY --from=arctic-inference-wheel-builder /tmp/arctic_wheels/ /tmp/arctic_wheels/
 RUN --mount=type=cache,sharing=locked,target=/var/cache/uv \
     if [ -n "${VLLM_QAIC_PR}" ]; then \
         echo "=== CI: vllm-qaic from PR #${VLLM_QAIC_PR} ===" && \
@@ -406,9 +457,18 @@ RUN --mount=type=cache,sharing=locked,target=/var/cache/uv \
         echo "=== CI: vllm-qaic from build context ===" && \
         SRC=/src/vllm-qaic; \
     fi && \
-    QAIC_DEVICE_ARCH="${QAIC_DEVICE_ARCH}" \
-    VLLM_VERSION_OVERRIDE="${VLLM_VERSION}+pyt${VLLM_QAIC_VERSION}" \
-    uv pip install --no-build-isolation "${SRC}" && \
+    if [ "${VLLM_QAIC_INSTALL_SPD}" = "1" ]; then \
+        arctic_wheel="$(find /tmp/arctic_wheels -maxdepth 1 -name 'arctic_inference-0.1.1-*.whl' -print -quit)" && \
+        test -n "${arctic_wheel}" && \
+        uv pip install "${arctic_wheel}" && \
+        QAIC_DEVICE_ARCH="${QAIC_DEVICE_ARCH}" \
+        VLLM_VERSION_OVERRIDE="${VLLM_VERSION}+pyt${VLLM_QAIC_VERSION}" \
+        uv pip install --no-build-isolation "${SRC}[spd]"; \
+    else \
+        QAIC_DEVICE_ARCH="${QAIC_DEVICE_ARCH}" \
+        VLLM_VERSION_OVERRIDE="${VLLM_VERSION}+pyt${VLLM_QAIC_VERSION}" \
+        uv pip install --no-build-isolation "${SRC}"; \
+    fi && \
     uv pip install -r "${SRC}/requirements/test.txt"
 
 # hadolint ignore=DL3006
@@ -440,6 +500,7 @@ ARG QAIC_DEVICE_ARCH="v68"
 ARG VLLM_TARGET_DEVICE_PYT="empty"
 ARG VLLM_PR=""
 ARG VLLM_BRANCH=""
+ARG VLLM_QAIC_INSTALL_SPD="0"
 
 # vllm editable — re-clone (pyt-base deleted its source after the
 # non-editable install; same VLLM_PR/VLLM_BRANCH priority), uninstall that
@@ -462,10 +523,20 @@ RUN --mount=type=cache,sharing=locked,target=/var/cache/uv \
         --no-build-isolation --no-deps -e /src/vllm
 
 COPY . /src/vllm-qaic
+COPY --from=arctic-inference-wheel-builder /tmp/arctic_wheels/ /tmp/arctic_wheels/
 RUN --mount=type=cache,sharing=locked,target=/var/cache/uv \
-    QAIC_DEVICE_ARCH="${QAIC_DEVICE_ARCH}" \
-    VLLM_VERSION_OVERRIDE="${VLLM_VERSION}+pyt${VLLM_QAIC_VERSION}" \
-    uv pip install --no-build-isolation -e /src/vllm-qaic && \
+    if [ "${VLLM_QAIC_INSTALL_SPD}" = "1" ]; then \
+        arctic_wheel="$(find /tmp/arctic_wheels -maxdepth 1 -name 'arctic_inference-0.1.1-*.whl' -print -quit)" && \
+        test -n "${arctic_wheel}" && \
+        uv pip install "${arctic_wheel}" && \
+        QAIC_DEVICE_ARCH="${QAIC_DEVICE_ARCH}" \
+        VLLM_VERSION_OVERRIDE="${VLLM_VERSION}+pyt${VLLM_QAIC_VERSION}" \
+        uv pip install --no-build-isolation -e "/src/vllm-qaic[spd]"; \
+    else \
+        QAIC_DEVICE_ARCH="${QAIC_DEVICE_ARCH}" \
+        VLLM_VERSION_OVERRIDE="${VLLM_VERSION}+pyt${VLLM_QAIC_VERSION}" \
+        uv pip install --no-build-isolation -e /src/vllm-qaic; \
+    fi && \
     uv pip install -r /src/vllm-qaic/requirements/test.txt
 
 # hadolint ignore=DL3006

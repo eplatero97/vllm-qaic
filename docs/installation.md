@@ -267,13 +267,16 @@ pip install --no-build-isolation ./vllm-qaic
 
 `ci` and `dev` additionally install `requirements/test.txt` (pytest, ruff, mypy, etc.) so tests can run directly inside the image; `release`/`wheel` don't, since they're meant to be lean runtime/distribution artifacts.
 
-`PYTHON_VERSION` (default `3.12`; also `3.11`/`3.13`) is threaded through every target via `aot-base`/`pyt-base`, provisioned with `uv python install` rather than apt so non-default versions work regardless of the base image's own Python.
+`PYTHON_VERSION` (default `3.12`) is provisioned with `uv python install` rather than apt, so supported non-default versions do not depend on the base image's system Python. AOT supports 3.11/3.12; PYT supports 3.11/3.12 with the default base image.
 
 > [!WARNING]
-> `PYTHON_VERSION=3.13` works for `Dockerfile.pyt` but **fails for `Dockerfile.aot`**
-> at the QEfficient layer (`sentencepiece==0.2.0` has no cp313 wheel). Build AOT images
-> and wheels with 3.11 or 3.12 — the AOT wheel is `py3-none-any`, so one build covers
-> every supported Python version anyway. See [Prerequisites](#prerequisites).
+> `PYTHON_VERSION=3.13` is not supported by the documented default image matrix:
+> AOT fails at the QEfficient layer (`sentencepiece==0.2.0` has no cp313 wheel),
+> while PYT needs a matching `torch_qaic` wheel under
+> `${TORCH_QAIC_BASE_PATH}/py313/`, which the default `BASE_IMAGE` does not ship.
+> Use 3.11 or 3.12 with the default images. A custom PYT base image can use 3.13
+> if it provides a compatible CPython 3.13 wheel. AOT wheels are `py3-none-any`,
+> so one build covers the supported Python versions. See [Prerequisites](#prerequisites).
 
 ### Build args
 
@@ -303,6 +306,7 @@ All `ARG`s are global (declared before the first `FROM`) and re-declared inside 
 | `VLLM_QAIC_GIT_REF` | `v0.23.0` | `release` target: vllm-qaic git tag/branch to clone |
 | `VLLM_QAIC_PR` | *(empty)* | `ci` target: PR number to fetch (takes priority over `VLLM_QAIC_BRANCH`) |
 | `VLLM_QAIC_BRANCH` | *(empty)* | `ci` target: branch to fetch |
+| `VLLM_QAIC_INSTALL_SPD` | `0` | Set to `1` to build and install the pinned Arctic Inference wheel in `release`, `ci`, or `dev` |
 | `QEFF_PR` | *(empty)* | `dev` target: QEfficient PR to install editable (overrides `QEFF_BRANCH`) |
 | `WHEEL_NAME` | *(empty)* | `wheel` target: rename the built wheel to this filename before exporting it (empty = `uv build`'s own name). See [Overriding the wheel filename](#overriding-the-wheel-filename) |
 
@@ -313,7 +317,7 @@ All `ARG`s are global (declared before the first `FROM`) and re-declared inside 
 | `BASE_IMAGE` | `ghcr.io/quic/cloud_ai_inference_ubuntu24:1.21.6.0` | Must have the QAIC Platform and Apps SDKs installed (`/opt/qti-aic/` present with `torch_qaic` wheels) |
 | `VENV` | `/opt/venv-pyt` | Path to the venv created inside the image |
 | `UV_VERSION` | `0.11.29` | Pinned `uv` binary version, pulled via `COPY --from` |
-| `PYTHON_VERSION` | `3.12` | Python version (`3.11`/`3.12`/`3.13`), provisioned via `uv python install` |
+| `PYTHON_VERSION` | `3.12` | Python version (`3.11`/`3.12`; `3.13` only when the base image provides a compatible `torch_qaic` wheel), provisioned via `uv python install` |
 | `RUST_VERSION` | `1.90` | Pinned Rust toolchain image tag (`rust:<ver>-slim`); only used when `VLLM_BUILD_RUST=1` |
 | `RUST_IMAGE` | `docker.io/library/rust:${RUST_VERSION}-slim` | Full image ref for the Rust toolchain. Override to pull from a mirror or internal registry; supplies its own tag, so it takes precedence over `RUST_VERSION` |
 | `VLLM_VERSION` | `0.23.0` | vLLM release tag to install |
@@ -330,6 +334,7 @@ All `ARG`s are global (declared before the first `FROM`) and re-declared inside 
 | `VLLM_QAIC_GIT_REF` | `v0.23.0` | `release` target: vllm-qaic git tag/branch to clone |
 | `VLLM_QAIC_PR` | *(empty)* | `ci` target: PR number to fetch (takes priority over `VLLM_QAIC_BRANCH`) |
 | `VLLM_QAIC_BRANCH` | *(empty)* | `ci` target: branch to fetch |
+| `VLLM_QAIC_INSTALL_SPD` | `0` | Set to `1` to build and install the pinned Arctic Inference wheel in `release`, `ci`, or `dev` |
 | `WHEEL_NAME` | *(empty)* | `wheel` target: rename the built wheel to this filename before exporting it (empty = `uv build`'s own name). See [Overriding the wheel filename](#overriding-the-wheel-filename) |
 
 ### Build commands
@@ -338,6 +343,12 @@ All `ARG`s are global (declared before the first `FROM`) and re-declared inside 
 # Release (default pins)
 docker build --target release -f docker/Dockerfile.aot -t vllm-qaic-aot:1.22 .
 docker build --target release -f docker/Dockerfile.pyt -t vllm-qaic-pyt:1.22 .
+
+# Release with suffix speculative-decoding dependencies (Arctic Inference)
+docker build --target release -f docker/Dockerfile.aot \
+  --build-arg VLLM_QAIC_INSTALL_SPD=1 -t vllm-qaic-aot:spd .
+docker build --target release -f docker/Dockerfile.pyt \
+  --build-arg VLLM_QAIC_INSTALL_SPD=1 -t vllm-qaic-pyt:spd .
 
 # Release (override version / device arch)
 docker build --target release -f docker/Dockerfile.aot \
@@ -490,8 +501,49 @@ pip install "vllm_qaic[spd] @ file://${VLLM_QAIC_WHEEL}"
 Do not pass `--no-deps` when installing the extra. Arctic Inference is
 currently distributed as a source archive, so pip will attempt to build it
 during installation; that build requires a compatible native build toolchain
-and may fail if one is unavailable. Installing the ordinary wheel without the
-`[spd]` extra remains unchanged.
+and may fail if one is unavailable.
+
+The repository installer accepts the same opt-in for source checkouts and SDK
+wheel installs:
+
+```bash
+./scripts/install.sh aot --spd
+./scripts/install.sh pyt --spd
+```
+
+Without `--spd`, the installer behaves as before. With it, source installs ask
+pip to build Arctic from its source archive as part of installing
+`vllm-qaic[spd]`; success depends on the host having a compatible compiler and
+Python/CMake build toolchain. In particular, the active environment needs the
+Arctic build requirements, including CMake/Ninja, `nanobind==2.9.2`,
+`grpcio-tools`, and compatible CPU Torch headers. The installer does not add
+these Arctic-specific build tools, so source installation is best-effort and
+can fail in a clean environment. SDK wheel installs request the extra from the
+wheel's own metadata and allow dependency installation (do not add `--no-deps`).
+
+Docker runtime targets offer a more controlled build path. Pass
+`--build-arg VLLM_QAIC_INSTALL_SPD=1` to a `release`, `ci`, or `dev` build. The
+Dockerfile builds the pinned Arctic source archive into a wheel in an isolated
+environment using the selected image platform, Python, and CPU-Torch version,
+then installs that wheel with the `spd` extra. The build fails if either the
+wheel build or package installation fails. Build tools and the intermediate
+wheel are not copied into the runtime image. The argument defaults to `0`, so
+default runtime images remain Arctic-free.
+
+```bash
+docker build --target release -f docker/Dockerfile.aot \
+  --build-arg PYTHON_VERSION=3.12 \
+  --build-arg VLLM_QAIC_INSTALL_SPD=1 \
+  -t vllm-qaic-aot:spd .
+docker build --target release -f docker/Dockerfile.pyt \
+  --build-arg PYTHON_VERSION=3.12 \
+  --build-arg VLLM_QAIC_INSTALL_SPD=1 \
+  -t vllm-qaic-pyt:spd .
+```
+
+The `aot-base`/`pyt-base` targets and existing `wheel` export target do not
+include or build Arctic; the option applies to installed `release`, `ci`, and
+`dev` runtime targets only.
 
 ---
 
