@@ -205,6 +205,10 @@ class QaicCausalLM(nn.Module, SupportsLoRA):
         self.sampler = Sampler(logprobs_mode=model_config.logprobs_mode)
         self.pad = np.full(self.prefill_seq_len, fill_value=-1, dtype=np.int64)
 
+        # Must be set before the per-K dicts below: the helper sizes
+        # position_ids as (4, bsz, mdt) for MRoPE models.
+        self.uses_mrope = model_config.uses_mrope
+
         # Pre-allocate one input dict per K for static dispatch shapes.
         self.decode_batch_inputs_by_k: dict[int, dict] = {}
         self.decode_logits_by_k: dict[int, dict] = {}
@@ -233,7 +237,6 @@ class QaicCausalLM(nn.Module, SupportsLoRA):
         # Pooling
         self.is_pooling_model = vllm_config.model_config.runner_type == "pooling"
         # Multimodal
-        self.uses_mrope = model_config.uses_mrope
         self.is_vision_encoder = False
         self.is_multimodal_model = vllm_config.model_config.is_multimodal_model
 
@@ -908,12 +911,8 @@ class QaicCausalLM(nn.Module, SupportsLoRA):
     def _make_decode_batch_input_for_k(self, k: int) -> dict:
         """Create a per-K decode input dict with sequence length ``k + 1``."""
         mdt = k + 1
-        # uses_mrope is assigned after the init-time per-K dicts are built; the
-        # multimodal subclass tiles those itself (see QaicMultiModal.__init__).
         pos_shape = (
-            (4, self.decode_bsz, mdt)
-            if getattr(self, "uses_mrope", False)
-            else (self.decode_bsz, mdt)
+            (4, self.decode_bsz, mdt) if self.uses_mrope else (self.decode_bsz, mdt)
         )
         d: dict = {
             "input_ids": np.zeros((self.decode_bsz, mdt), dtype=np.int64),

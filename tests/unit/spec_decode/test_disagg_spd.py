@@ -172,7 +172,7 @@ def test_num_decode_rows_to_pad_handles_mixed_consumer_batches(
 
 @pytest.mark.parametrize("lora_mode", [False, True])
 def test_decode_batch_input_helper_builds_static_shapes(lora_mode):
-    runner = SimpleNamespace(decode_bsz=2, lora_mode=lora_mode)
+    runner = SimpleNamespace(decode_bsz=2, lora_mode=lora_mode, uses_mrope=False)
 
     inputs = QaicCausalLM._make_decode_batch_input_for_k(runner, 3)
 

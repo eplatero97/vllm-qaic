@@ -79,13 +79,6 @@ class QaicMultiModal(QaicCausalLM, SupportsMultiModal, SupportsMRoPE):
         if self.uses_mrope:
             # QEfficient requires position ids to be (4, batch_size, seq_len)
             self.pad: np.ndarray = np.tile(self.pad, (4, 1))
-            # Tile every per-K decode dict (not just the max-K alias): _run_decode
-            # writes (4, n, mdt) positions into whichever K is active.
-            for _inputs in self.decode_batch_inputs_by_k.values():
-                if _inputs["position_ids"].ndim == 2:
-                    _inputs["position_ids"] = np.tile(
-                        _inputs["position_ids"], (4, 1, 1)
-                    )
         self.is_qwenvl = self.config.model_type in (
             "qwen2_5_vl",
             "qwen3_vl",
