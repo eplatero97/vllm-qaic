@@ -908,9 +908,16 @@ class QaicCausalLM(nn.Module, SupportsLoRA):
     def _make_decode_batch_input_for_k(self, k: int) -> dict:
         """Create a per-K decode input dict with sequence length ``k + 1``."""
         mdt = k + 1
+        # uses_mrope is assigned after the init-time per-K dicts are built; the
+        # multimodal subclass tiles those itself (see QaicMultiModal.__init__).
+        pos_shape = (
+            (4, self.decode_bsz, mdt)
+            if getattr(self, "uses_mrope", False)
+            else (self.decode_bsz, mdt)
+        )
         d: dict = {
             "input_ids": np.zeros((self.decode_bsz, mdt), dtype=np.int64),
-            "position_ids": np.full((self.decode_bsz, mdt), -1, dtype=np.int64),
+            "position_ids": np.full(pos_shape, -1, dtype=np.int64),
             "batch_index": np.arange(self.decode_bsz, dtype=np.int64).reshape(-1, 1),
         }
         if self.lora_mode:
@@ -1316,8 +1323,11 @@ class QaicCausalLM(nn.Module, SupportsLoRA):
                 for kv_shape, kv_type, _, _ in self.kv_cache_info:
                     KvCache_buff.append(np.empty(shape=kv_shape, dtype=kv_type))
 
+                # Use the K the QPC was actually compiled with, which may differ
+                # from the configured max_decode_tokens (see
+                # _warn_on_decode_k_mismatch).
                 decode_logits_shape = (
-                    (self.decode_bsz, self.max_decode_tokens, self.vocab_size)
+                    (self.decode_bsz, self.decode_ks[-1] + 1, self.vocab_size)
                     if self.logits_ndim == 3
                     else (self.decode_bsz, self.vocab_size)
                 )
@@ -2219,7 +2229,9 @@ def _get_qaic_compile_config(
         if override_qaic_config and key in override_qaic_config:
             if qaic_config is None:
                 qaic_config = {}
-            qaic_config.setdefault(key, override_qaic_config.pop(key))
+            # Read, don't pop: override_qaic_config is shared with the draft
+            # model's config, which must see the same replication settings.
+            qaic_config.setdefault(key, override_qaic_config[key])
             cfg.pop(key, None)
     if speculative_model_type in ("target", "turbo"):
         if qaic_config is None:

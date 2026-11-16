@@ -406,6 +406,60 @@ def test_disagg_compile_preserves_explicit_qaic_replication_config(
     }
 
 
+def test_compile_config_does_not_mutate_shared_override_replication_keys():
+    """Target and draft share one override dict; the 2nd call must still see it."""
+    override = {"replicate_kv_heads": True, "num_replicate_kv_heads": 2}
+    config = SimpleNamespace(
+        model_config=SimpleNamespace(
+            quantization=None,
+            max_model_len=128,
+            runner_type="generate",
+            is_multimodal_model=False,
+            hf_config=SimpleNamespace(num_attention_heads=32, num_key_value_heads=8),
+        ),
+        cache_config=SimpleNamespace(
+            cache_dtype="auto", num_cpu_blocks=1, enable_prefix_caching=False
+        ),
+        scheduler_config=SimpleNamespace(max_num_seqs=2),
+        additional_config={"device_group": [9], "override_qaic_config": override},
+        speculative_config=None,
+        kv_transfer_config=None,
+        lora_config=None,
+    )
+    qaicrt = types.ModuleType("qaicrt")
+    qaicrt.QStatus = SimpleNamespace(QS_SUCCESS=0)
+
+    class FakeUtil:
+        def getResourceInfo(self, _qid):
+            return qaicrt.QStatus.QS_SUCCESS, SimpleNamespace(nspTotal=16)
+
+    qaicrt.Util = FakeUtil
+
+    with (
+        patch.dict("sys.modules", {"qaicrt": qaicrt}),
+        patch.object(
+            qaic_model_loader,
+            "QAIC_DEVICE_CONFIG",
+            {"default": {}, "target": {}, "draft": {}},
+        ),
+    ):
+        first = qaic_model_loader._get_qaic_compile_config(config, "default")
+        second = qaic_model_loader._get_qaic_compile_config(config, "default")
+
+    assert override == {"replicate_kv_heads": True, "num_replicate_kv_heads": 2}
+    assert first.qaic_config == second.qaic_config
+    assert second.qaic_config["replicate_kv_heads"] is True
+
+
+def test_decode_batch_input_helper_is_mrope_aware():
+    runner = SimpleNamespace(decode_bsz=2, lora_mode=False, uses_mrope=True)
+
+    inputs = QaicCausalLM._make_decode_batch_input_for_k(runner, 0)
+
+    assert inputs["input_ids"].shape == (2, 1)
+    assert inputs["position_ids"].shape == (4, 2, 1)
+
+
 @pytest.mark.parametrize(
     ("max_model_len", "user_qaic_config"),
     [
