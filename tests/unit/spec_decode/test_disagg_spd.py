@@ -184,6 +184,50 @@ def test_decode_batch_input_helper_builds_static_shapes(lora_mode):
     assert ("lora_ids" in inputs) is lora_mode
 
 
+@pytest.mark.parametrize(
+    "decode_ks,logits_ndim,expected_shape",
+    [
+        # Shape follows the K the QPC was compiled with (decode_ks[-1]), not the
+        # configured max_decode_tokens.
+        ([0, 3], 3, (2, 4, 32)),
+        ([5], 3, (2, 6, 32)),
+        ([0], 3, (2, 1, 32)),
+        ([0, 3], 2, (2, 32)),
+    ],
+)
+def test_disagg_dummy_run_decode_logits_shape(decode_ks, logits_ndim, expected_shape):
+    session = MagicMock()
+    session.cluster_id = "decode"
+    session.input_names = ["batch_index"]
+    session.output_names = ["logits"]
+    by_k = {k: {"input_ids": np.zeros((2, k + 1), dtype=np.int64)} for k in decode_ks}
+    runner = SimpleNamespace(
+        session=session,
+        uses_mrope=False,
+        is_spec_decode_target_model=False,
+        lora_mode=False,
+        default_mm_kwargs=None,
+        decode_bsz=2,
+        decode_ks=decode_ks,
+        decode_batch_inputs_by_k=by_k,
+        # Deliberately inconsistent with decode_ks: must not be used.
+        max_decode_tokens=99,
+        vocab_size=32,
+        logits_ndim=logits_ndim,
+        logits_dtype=np.float32,
+        kv_cache_info=[],
+        comp_ctx_lengths_decode=None,
+        decode_execObj_idx=None,
+    )
+
+    QaicCausalLM.disagg_dummy_run(runner)
+
+    assert session.create_output_buffers.call_count == len(decode_ks)
+    for call in session.create_output_buffers.call_args_list:
+        assert call.args[1] == expected_shape
+    assert runner.decode_batch_inputs is by_k[decode_ks[-1]]
+
+
 def test_decode_ks_from_session_uses_decode_shapes():
     runner = SimpleNamespace(
         session=SimpleNamespace(
