@@ -2230,7 +2230,13 @@ def _get_qaic_compile_config(
             if qaic_config is None:
                 qaic_config = {}
             # Read, don't pop: override_qaic_config is shared with the draft
-            # model's config, which must see the same replication settings.
+            # model's config, so the draft inherits these keys like any other
+            # shared override. Inheriting is safe because QEfficient only reads
+            # the boolean `replicate_kv_heads` and derives the factor per model
+            # from its own KV heads and device count (returning no replication
+            # when num_devices <= kv_heads or not divisible), so a typical
+            # draft on few devices is unaffected. `num_replicate_kv_heads` is
+            # not read by QEfficient's replication path.
             qaic_config.setdefault(key, override_qaic_config[key])
             cfg.pop(key, None)
     if speculative_model_type in ("target", "turbo"):
