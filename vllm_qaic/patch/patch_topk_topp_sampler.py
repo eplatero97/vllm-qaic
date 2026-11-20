@@ -15,6 +15,11 @@ flag is the only thing that decides: ``VLLM_QAIC_TRITON_TOPK_TOPP=1`` routes to
 ``apply_top_k_top_p_triton`` at any batch size, and anything else routes to the
 PyTorch implementation. The flag is resolved once at import through
 ``triton_op_enabled()``, the same infrastructure as the per-op CustomOp flags.
+
+The rebind happens at import (see ``vllm_qaic.patch``), before downstream vLLM
+modules copy the selector into their own namespace.  ``install()`` is kept as an
+idempotent entry point for callers of the pre-v0.30 API (for example
+``vllm_qaic.v1.sample.topk_topp_sampler_shim``).
 """
 
 import torch
@@ -47,4 +52,16 @@ def _qaic_apply_top_k_top_p(
     return apply_top_k_top_p_pytorch(logits, k, p)
 
 
-topk_topp_sampler.apply_top_k_top_p = _qaic_apply_top_k_top_p
+_installed = False
+
+
+def install() -> None:
+    """Rebind upstream's top-k/top-p selector to the QAIC one.  Idempotent."""
+    global _installed
+    if _installed:
+        return
+    topk_topp_sampler.apply_top_k_top_p = _qaic_apply_top_k_top_p
+    _installed = True
+
+
+install()

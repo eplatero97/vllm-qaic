@@ -10,7 +10,7 @@ ragged batch with empty requests, draft ids at row edges, and odd vocab sizes
 
 Tier A (``triton_parity``): skipped without triton-cpu.
 
-    TRITON_CPU_BACKEND=1 .venv_aot/bin/python -m pytest -s -q \
+    CUDA_VISIBLE_DEVICES= TRITON_CPU_BACKEND=1 .venv_aot/bin/python -m pytest -s -q \
         tests/unit/spec_decode/rejection_parity/test_triton_parity_kernels.py
 """
 

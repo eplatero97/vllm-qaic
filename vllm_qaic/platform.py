@@ -451,6 +451,21 @@ class QaicPlatform(Platform):
                 )
                 scheduler_config.async_scheduling = False
 
+        if (
+            cls.is_aot
+            and vllm_config.speculative_config is not None
+            and scheduler_config.async_scheduling
+        ):
+            # AOT SpD only supports synchronous scheduling: the runner does not
+            # apply upstream's async draft-count corrections. vLLM >= 0.30 also
+            # enables async by default for draft_model and dflash.
+            logger.warning_once(
+                "QAIC AOT speculative decoding (%s) does not support async "
+                "scheduling; Falling back to non-async scheduling.",
+                vllm_config.speculative_config.method,
+            )
+            scheduler_config.async_scheduling = False
+
         cache_config = vllm_config.cache_config
         if cache_config:
             if not cls.is_aot:

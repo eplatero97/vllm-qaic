@@ -79,7 +79,9 @@ def rs_kernels(monkeypatch):
 
     rsn.install()
     try:
-        for name in rsn.KERNEL_NAMES:
+        # v0.30 launches through the dispatcher globals, which capture their
+        # kernel at import; swap both so the pristine module also runs Numba.
+        for name in rsn.KERNEL_NAMES + rsn.DISPATCHER_NAMES:
             monkeypatch.setattr(_PRISTINE_RS, name, getattr(upstream_rs, name))
         yield "numba"
     finally:
