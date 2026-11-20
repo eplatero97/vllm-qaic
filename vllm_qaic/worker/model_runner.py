@@ -1648,6 +1648,7 @@ class QaicModelRunnerAoT(GPUModelRunner):
         assert self.drafter is not None
         if spec_config.method == "ngram":
             draft_token_ids = self.drafter.propose(  # type: ignore[call-arg]
+                spec_config.num_speculative_tokens,
                 sampled_token_ids,
                 self.input_batch.num_tokens_no_spec,
                 self.input_batch.token_ids_cpu,
@@ -1661,7 +1662,10 @@ class QaicModelRunnerAoT(GPUModelRunner):
                 np.int32, copy=False
             )
             draft_token_ids = self.drafter.propose(  # type: ignore[call-arg]
-                self.input_batch, sampled_token_ids, slot_mappings=slot_mappings
+                spec_config.num_speculative_tokens,
+                self.input_batch,
+                sampled_token_ids,
+                slot_mappings=slot_mappings,
             )
             self.input_batch.token_ids_cpu = token_ids_cpu_orig
         elif spec_config.uses_draft_model():
