@@ -1,0 +1,38 @@
+RUN /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/../../.venv_eager/bin/python -u /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/run_qwen3next_spd.py child ngram /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/m70pad1_ngram.json theo77186/Qwen3-Next-70M-TinyStories --max-num-seqs 1 --bypass-hybrid > /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/m70pad1_ngram.log
+  rc=0
+RUN /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/../../.venv_eager/bin/python -u /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/run_qwen3next_spd.py child suffix /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/m70pad1_suffix.json theo77186/Qwen3-Next-70M-TinyStories --max-num-seqs 1 --bypass-hybrid > /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/m70pad1_suffix.log
+  rc=0
+SUMMARY {
+ "ngram": {
+  "error": null,
+  "num_draft_tokens": 1420,
+  "num_accepted_tokens": 153,
+  "probe": {
+   "steps": 1085,
+   "steps_with_spec_decodes": 1061,
+   "zero_draft_decode_rows": 0,
+   "hazard_rows": 0,
+   "hazard_samples": [],
+   "block_shape_sample": [
+    1,
+    5
+   ]
+  }
+ },
+ "suffix": {
+  "error": null,
+  "num_draft_tokens": 1160,
+  "num_accepted_tokens": 217,
+  "probe": {
+   "steps": 892,
+   "steps_with_spec_decodes": 868,
+   "zero_draft_decode_rows": 0,
+   "hazard_rows": 0,
+   "hazard_samples": [],
+   "block_shape_sample": [
+    1,
+    5
+   ]
+  }
+ }
+}

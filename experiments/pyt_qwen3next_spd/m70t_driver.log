@@ -1,0 +1,58 @@
+RUN /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/../../.venv_eager/bin/python -u /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/run_qwen3next_spd.py child baseline /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/m70t_baseline.json theo77186/Qwen3-Next-70M-TinyStories --max-num-seqs 8 > /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/m70t_baseline.log
+  rc=0
+RUN /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/../../.venv_eager/bin/python -u /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/run_qwen3next_spd.py child baseline2 /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/m70t_baseline2.json theo77186/Qwen3-Next-70M-TinyStories --max-num-seqs 8 > /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/m70t_baseline2.log
+  rc=0
+SUMMARY {
+ "baseline": {
+  "error": null,
+  "num_draft_tokens": 0,
+  "num_accepted_tokens": 0,
+  "probe": {
+   "steps": 189,
+   "steps_with_spec_decodes": 0,
+   "zero_draft_decode_rows": 0,
+   "hazard_rows": 0,
+   "hazard_samples": [],
+   "block_shape_sample": [
+    8,
+    1
+   ]
+  }
+ },
+ "baseline2": {
+  "error": null,
+  "num_draft_tokens": 0,
+  "num_accepted_tokens": 0,
+  "probe": {
+   "steps": 190,
+   "steps_with_spec_decodes": 0,
+   "zero_draft_decode_rows": 0,
+   "hazard_rows": 0,
+   "hazard_samples": [],
+   "block_shape_sample": [
+    8,
+    1
+   ]
+  },
+  "vs_baseline_equal": [
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false
+  ],
+  "vs_baseline_first_div": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

@@ -1,0 +1,35 @@
+Caught Pytorch Warning in QAicWarningHandler: Warning only once for all operators,  other operators may also be overridden.
+  Overriding a previously registered kernel for the same operator and the same dispatch key
+  operator: aten::_has_compatible_shallow_copy_type(Tensor self, Tensor from) -> bool
+    registered at /__w/pytorch/pytorch/build/aten/src/ATen/RegisterSchema.cpp:6
+  dispatch key: (catch all)
+  previous kernel: registered at /__w/pytorch/pytorch/build/aten/src/ATen/RegisterCompositeImplicitAutograd_0.cpp:8056
+       new kernel: registered at /local/mnt/workspace/qraniumcitest/ci2/workspace/Generic-CI-Design/Qranium-Module-Build/pytorch/qaictorch/torch_qaic/csrc/RegisterQAicCore.cpp:396
+INFO 11-20 11:05:50 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 11-20 11:05:50 [__init__.py:54] - qaic -> vllm_qaic:register
+INFO 11-20 11:05:50 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 11-20 11:05:50 [__init__.py:272] Platform plugin qaic is activated
+WARNING 11-20 11:05:50 [platform.py:749] Pin memory is not supported on Qaic.
+stage=decode H=1 HV=2 K=128 V=128 W=4 D=512 S=6 POOL=10 dtype=torch.float16 FLA_CHUNK_SIZE=64
+Loading QAic Ops library from: /opt/qti-aic/dev/lib/common/qaicmlops/libQAicV68Ops.so
+-- non-spec decode, packed=True (fused_recurrent_..._packed_decode)
+   ran (3.3s)
+  [OK] req0 conv_update out: max_abs_err=6.461e-04 ref_max=2.320e+00 rel=2.785e-04
+  [OK] req0 conv_state[0:W-1] shifted: max_abs_err=0.000e+00 ref_max=3.533e+00 rel=0.000e+00
+  [OK] req0 recurrent out: max_abs_err=8.092e-06 ref_max=1.847e-02 rel=4.382e-04
+  [OK] req0 ssm slot 5 final: max_abs_err=1.864e-04 ref_max=2.926e-01 rel=6.372e-04
+  [OK] req1 conv_update out: max_abs_err=5.935e-04 ref_max=2.053e+00 rel=2.891e-04
+  [OK] req1 conv_state[0:W-1] shifted: max_abs_err=0.000e+00 ref_max=2.984e+00 rel=0.000e+00
+  [OK] req1 recurrent out: max_abs_err=1.738e-06 ref_max=5.043e-03 rel=3.446e-04
+  [OK] req1 ssm slot 3 final: max_abs_err=1.764e-04 ref_max=3.708e-01 rel=4.757e-04
+-- non-spec decode, packed=False (fused_sigmoid_gating (1D idx))
+   ran (1.5s)
+  [OK] req0 conv_update out: max_abs_err=1.075e-03 ref_max=3.376e+00 rel=3.184e-04
+  [OK] req0 conv_state[0:W-1] shifted: max_abs_err=0.000e+00 ref_max=3.221e+00 rel=0.000e+00
+  [OK] req0 recurrent out: max_abs_err=2.483e-06 ref_max=9.446e-03 rel=2.628e-04
+  [OK] req0 ssm slot 5 final: max_abs_err=4.552e-04 ref_max=5.191e-01 rel=8.769e-04
+  [OK] req1 conv_update out: max_abs_err=9.122e-04 ref_max=1.642e+00 rel=5.556e-04
+  [OK] req1 conv_state[0:W-1] shifted: max_abs_err=0.000e+00 ref_max=3.549e+00 rel=0.000e+00
+  [OK] req1 recurrent out: max_abs_err=9.396e-06 ref_max=1.168e-02 rel=8.048e-04
+  [OK] req1 ssm slot 3 final: max_abs_err=3.400e-04 ref_max=3.425e-01 rel=9.926e-04
+STAGE decode RESULT: OK (4.9s)

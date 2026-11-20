@@ -1,0 +1,11 @@
+HF_HOME=/local/mnt/workspace/eplatero/hf
+RUN /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/bin/python -u /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_hybrid_spd/run_hybrid_spd.py child baseline /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_hybrid_spd/granite-4.0-h-350m_baseline.json ibm-granite/granite-4.0-h-350m > /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_hybrid_spd/granite-4.0-h-350m_baseline.log
+  rc=1
+SUMMARY {
+ "baseline": {
+  "error": "rc=1, see /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_hybrid_spd/granite-4.0-h-350m_baseline.log",
+  "num_draft_tokens": null,
+  "num_accepted_tokens": null,
+  "probe": null
+ }
+}

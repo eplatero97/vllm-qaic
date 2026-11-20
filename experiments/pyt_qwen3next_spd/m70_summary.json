@@ -1,0 +1,14 @@
+{
+ "baseline": {
+  "error": "rc=1, see /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/m70_baseline.log",
+  "num_draft_tokens": null,
+  "num_accepted_tokens": null,
+  "probe": null
+ },
+ "baseline2": {
+  "error": "rc=1, see /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/m70_baseline2.log",
+  "num_draft_tokens": null,
+  "num_accepted_tokens": null,
+  "probe": null
+ }
+}

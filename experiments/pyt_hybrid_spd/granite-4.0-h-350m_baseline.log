@@ -1,0 +1,271 @@
+Caught Pytorch Warning in QAicWarningHandler: Warning only once for all operators,  other operators may also be overridden.
+  Overriding a previously registered kernel for the same operator and the same dispatch key
+  operator: aten::_has_compatible_shallow_copy_type(Tensor self, Tensor from) -> bool
+    registered at /__w/pytorch/pytorch/build/aten/src/ATen/RegisterSchema.cpp:6
+  dispatch key: (catch all)
+  previous kernel: registered at /__w/pytorch/pytorch/build/aten/src/ATen/RegisterCompositeImplicitAutograd_0.cpp:8056
+       new kernel: registered at /local/mnt/workspace/qraniumcitest/ci2/workspace/Generic-CI-Design/Qranium-Module-Build/pytorch/qaictorch/torch_qaic/csrc/RegisterQAicCore.cpp:396
+INFO 11-19 20:24:41 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 11-19 20:24:41 [__init__.py:54] - qaic -> vllm_qaic:register
+INFO 11-19 20:24:41 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 11-19 20:24:41 [__init__.py:272] Platform plugin qaic is activated
+WARNING 11-19 20:24:41 [platform.py:745] Pin memory is not supported on Qaic.
+INFO 11-19 20:24:48 [api_utils.py:286] non-default args: {'dtype': 'float16', 'max_model_len': 512, 'enable_prefix_caching': False, 'gpu_memory_utilization': 0.9, 'max_num_seqs': 8, 'enforce_eager': True, 'async_scheduling': False, 'model': 'ibm-granite/granite-4.0-h-350m'}
+WARNING 11-19 20:24:49 [mooncake_connector.py:75] Please install mooncake by following the instructions at https://github.com/kvcache-ai/Mooncake/blob/main/doc/en/build.md to run VLLM with MooncakeTransferEngine.
+[transformers] `SiglipImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `SiglipImageProcessor` instead.
+INFO 11-19 20:25:02 [model.py:692] Resolved architecture: GraniteMoeHybridForCausalLM
+WARNING 11-19 20:25:02 [model.py:2364] Casting torch.bfloat16 to torch.float16.
+INFO 11-19 20:25:02 [model.py:2030] Using max model len 512
+INFO 11-19 20:25:02 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=4096.
+WARNING 11-19 20:25:03 [vllm.py:1547] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+WARNING 11-19 20:25:03 [vllm.py:1570] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+INFO 11-19 20:25:03 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+INFO 11-19 20:25:03 [compilation.py:336] Enabled custom fusions: norm_quant, act_quant
+(EngineCore pid=293119) INFO 11-19 20:25:04 [core.py:123] Initializing a V1 LLM engine (v0.30.0) with config: model='ibm-granite/granite-4.0-h-350m', speculative_config=None, tokenizer='ibm-granite/granite-4.0-h-350m', skip_tokenizer_init=False, tokenizer_mode=auto, revision=main, tokenizer_revision=main, trust_remote_code=False, dtype=torch.float16, max_seq_len=512, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=None, quantization_config=None, enforce_eager=True, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=qaic, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, per_request_spec_decode_metrics='none', kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=0, served_model_name=ibm-granite/granite-4.0-h-350m, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.NONE: 0>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['all'], 'ir_enable_torch_wrap': False, 'splitting_ops': [], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': None, 'compile_ranges_endpoints': [4096], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.NONE: 0>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': None, 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': True, 'fuse_act_quant': True, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'enable_qk_norm_rope_fusion': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False, 'fuse_qk_norm_rope_kvcache': False}, 'max_cudagraph_capture_size': None, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native']), enable_flashinfer_autotune=True, enable_cutedsl_warmup=True, enable_jit_warmup=False, moe_backend='auto', sparse_indexer_topk_backend='auto', linear_backend='auto', linear_backend_per_quant=None)
+(EngineCore pid=293119) WARNING 11-19 20:25:04 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+(EngineCore pid=293119) Using qaicrt from /opt/qti-aic/dev/lib/x86_64/
+Loading QAic Ops library from: /opt/qti-aic/dev/lib/common/qaicmlops/libQAicV68Ops.so
+(EngineCore pid=293119) INFO 11-19 20:25:06 [parallel_state.py:1827] world_size=1 rank=0 local_rank=0 distributed_init_method=file:///tmp/vllm_dist_8c64ae2d3d764c7ba36702a5e644a28a backend=qccl
+(EngineCore pid=293119) INFO 11-19 20:25:06 [parallel_state.py:2267] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, ETP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore pid=293119) WARNING 11-19 20:25:07 [worker.py:124] Reducing Torch parallelism from 128 threads to 8 to avoid unnecessary CPU contention. Set VLLM_QAIC_MAX_CPU_THREADS to tune this value as needed.
+(EngineCore pid=293119) INFO 11-19 20:25:07 [gpu_model_runner.py:5317] Starting to load model ibm-granite/granite-4.0-h-350m...
+(EngineCore pid=293119) INFO 11-19 20:25:08 [weight_utils.py:895] Filesystem type for checkpoints: EXT4. Checkpoint size: 0.63 GiB. Available RAM: 867.19 GiB.
+(EngineCore pid=293119) INFO 11-19 20:25:08 [weight_utils.py:918] Auto-prefetch is disabled because the filesystem (EXT4) is not a recognized network FS (NFS/Lustre). If you want to force prefetching, start vLLM with --safetensors-load-strategy=prefetch.
+(EngineCore pid=293119) Loading safetensors checkpoint shards:   0% Completed | 0/1 [00:00<?, ?it/s]
+(EngineCore pid=293119) Loading safetensors checkpoint shards: 100% Completed | 1/1 [00:00<00:00,  1.80it/s]
+(EngineCore pid=293119) Loading safetensors checkpoint shards: 100% Completed | 1/1 [00:00<00:00,  1.80it/s]
+(EngineCore pid=293119) 
+(EngineCore pid=293119) INFO 11-19 20:25:08 [default_loader.py:430] Loading weights took 0.60 seconds
+(EngineCore pid=293119) INFO 11-19 20:25:09 [gpu_model_runner.py:5416] Model loading took 0.63 GiB memory and 1.253421 seconds
+(EngineCore pid=293119) INFO 11-19 20:25:09 [interface.py:933] Setting attention block size to 400 tokens to ensure that attention page size is >= mamba page size.
+(EngineCore pid=293119) INFO 11-19 20:25:09 [interface.py:957] Padding mamba page size by 1.39% to ensure that mamba page size and attention page size are exactly equal.
+(EngineCore pid=293119) INFO 11-19 20:25:09 [utils.py:320] Using LBNHC KV cache layout.
+(EngineCore pid=293119) INFO 11-19 20:25:09 [mamba_mixer2.py:615] Warming up Mamba2 SSD Triton kernels...
+
+QAIC_MSG: Device logs are being logged in file ./qaic-dumps/QAicMLDevice0_CySHny.log
+
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694] Mamba2 SSD kernel warmup failed for layer model.layers.0.mixer (initial_states=False). First inference may experience latency spike or OOM due to autotuner.
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694] Traceback (most recent call last):
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/mamba_mixer2.py", line 673, in _warmup_ssd_kernels
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]     mamba_chunk_scan_combined_varlen(
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/ops/ssd_combined.py", line 205, in mamba_chunk_scan_combined_varlen
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]     varlen_states = _mamba_chunk_scan_combined_fwd(
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/ops/ssd_combined.py", line 104, in _mamba_chunk_scan_combined_fwd
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]     states = _chunk_state_fwd(
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]              ^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/ops/ssd_chunk_state.py", line 379, in _chunk_state_fwd
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]     _chunk_state_fwd_kernel[grid](
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/triton/runtime/jit.py", line 375, in <lambda>
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]     return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 238, in run
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]     used_cached_result = self.check_disk_cache(key, pruned_configs, benchmark)
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 202, in check_disk_cache
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]     bench_fn()
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 229, in benchmark
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]     timings = {config: self._bench(*args, config=config, **kwargs) for config in pruned_configs}
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/triton/runtime/autotuner.py", line 164, in _bench
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]     return self.do_bench(kernel_call, quantiles=(0.5, 0.2, 0.8))
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/triton/testing.py", line 150, in do_bench
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]     di.synchronize()
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch_qaic/qaic/__init__.py", line 191, in synchronize
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]     return torch_qaic._C._synchronize_device()
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) WARNING 11-19 20:27:17 [mamba_mixer2.py:694] RuntimeError: Device id: 0 QID: 0 Msg: Failed to synchronize stream. Error code: 500
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366] EngineCore failed to start.
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366] Traceback (most recent call last):
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1328, in run_engine_core
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1085, in __init__
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     super().__init__(
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 145, in __init__
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     kv_cache_config = self._initialize_kv_caches(vllm_config)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 308, in _initialize_kv_caches
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     available_gpu_memory = self.model_executor.determine_available_memory()
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/executor/abstract.py", line 149, in determine_available_memory
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     return self.collective_rpc("determine_available_memory")
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/executor/uniproc_executor.py", line 103, in collective_rpc
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     result = run_method(self.driver_worker, method, args, kwargs)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/serial_utils.py", line 510, in run_method
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     return func(*args, **kwargs)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     return func(*args, **kwargs)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/vllm_qaic/worker/worker.py", line 393, in determine_available_memory
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     self.model_runner.profile_run()
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py", line 6524, in profile_run
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     hidden_states, last_hidden_states = self._dummy_run(
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]                                         ^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     return func(*args, **kwargs)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py", line 6174, in _dummy_run
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     outputs = self.model(
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]               ^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     return self._call_impl(*args, **kwargs)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     return forward_call(*args, **kwargs)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/models/granitemoehybrid.py", line 699, in forward
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     hidden_states = self.model(
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]                     ^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/compilation/decorators.py", line 509, in __call__
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     return self.forward(*args, **kwargs)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/models/granitemoehybrid.py", line 401, in forward
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     hidden_states, residual = layer(
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]                               ^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     return self._call_impl(*args, **kwargs)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     return forward_call(*args, **kwargs)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/models/granitemoehybrid.py", line 123, in forward
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     output = self.mamba(hidden_states)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]              ^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     return self._call_impl(*args, **kwargs)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     return forward_call(*args, **kwargs)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/mamba_mixer2.py", line 590, in forward
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     torch.ops.vllm.mamba_mixer2(
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/_ops.py", line 1279, in __call__
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     return self._op(*args, **kwargs)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]            ^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/mamba_mixer2.py", line 1278, in mamba_mixer2
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     self.conv_ssm_forward(projected_states=projected_states, output=output)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/mamba_mixer2.py", line 768, in conv_ssm_forward
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     self._warmup_ssd_kernels(projected_states)
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/mamba_mixer2.py", line 661, in _warmup_ssd_kernels
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366]     torch.randn(
+(EngineCore pid=293119) ERROR 11-19 20:27:17 [core.py:1366] RuntimeError: Device id: 0 QID: 0 Msg: Failed to throttle stream submission. Error code: 500
+(EngineCore pid=293119) Process EngineCore:
+(EngineCore pid=293119) Traceback (most recent call last):
+(EngineCore pid=293119)   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+(EngineCore pid=293119)     self.run()
+(EngineCore pid=293119)   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+(EngineCore pid=293119)     self._target(*self._args, **self._kwargs)
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1370, in run_engine_core
+(EngineCore pid=293119)     raise e
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1328, in run_engine_core
+(EngineCore pid=293119)     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+(EngineCore pid=293119)                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1085, in __init__
+(EngineCore pid=293119)     super().__init__(
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 145, in __init__
+(EngineCore pid=293119)     kv_cache_config = self._initialize_kv_caches(vllm_config)
+(EngineCore pid=293119)                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 308, in _initialize_kv_caches
+(EngineCore pid=293119)     available_gpu_memory = self.model_executor.determine_available_memory()
+(EngineCore pid=293119)                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/executor/abstract.py", line 149, in determine_available_memory
+(EngineCore pid=293119)     return self.collective_rpc("determine_available_memory")
+(EngineCore pid=293119)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/executor/uniproc_executor.py", line 103, in collective_rpc
+(EngineCore pid=293119)     result = run_method(self.driver_worker, method, args, kwargs)
+(EngineCore pid=293119)              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/serial_utils.py", line 510, in run_method
+(EngineCore pid=293119)     return func(*args, **kwargs)
+(EngineCore pid=293119)            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(EngineCore pid=293119)     return func(*args, **kwargs)
+(EngineCore pid=293119)            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/vllm_qaic/worker/worker.py", line 393, in determine_available_memory
+(EngineCore pid=293119)     self.model_runner.profile_run()
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py", line 6524, in profile_run
+(EngineCore pid=293119)     hidden_states, last_hidden_states = self._dummy_run(
+(EngineCore pid=293119)                                         ^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(EngineCore pid=293119)     return func(*args, **kwargs)
+(EngineCore pid=293119)            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py", line 6174, in _dummy_run
+(EngineCore pid=293119)     outputs = self.model(
+(EngineCore pid=293119)               ^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+(EngineCore pid=293119)     return self._call_impl(*args, **kwargs)
+(EngineCore pid=293119)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+(EngineCore pid=293119)     return forward_call(*args, **kwargs)
+(EngineCore pid=293119)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/models/granitemoehybrid.py", line 699, in forward
+(EngineCore pid=293119)     hidden_states = self.model(
+(EngineCore pid=293119)                     ^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/compilation/decorators.py", line 509, in __call__
+(EngineCore pid=293119)     return self.forward(*args, **kwargs)
+(EngineCore pid=293119)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/models/granitemoehybrid.py", line 401, in forward
+(EngineCore pid=293119)     hidden_states, residual = layer(
+(EngineCore pid=293119)                               ^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+(EngineCore pid=293119)     return self._call_impl(*args, **kwargs)
+(EngineCore pid=293119)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+(EngineCore pid=293119)     return forward_call(*args, **kwargs)
+(EngineCore pid=293119)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/models/granitemoehybrid.py", line 123, in forward
+(EngineCore pid=293119)     output = self.mamba(hidden_states)
+(EngineCore pid=293119)              ^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+(EngineCore pid=293119)     return self._call_impl(*args, **kwargs)
+(EngineCore pid=293119)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+(EngineCore pid=293119)     return forward_call(*args, **kwargs)
+(EngineCore pid=293119)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/mamba_mixer2.py", line 590, in forward
+(EngineCore pid=293119)     torch.ops.vllm.mamba_mixer2(
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch/_ops.py", line 1279, in __call__
+(EngineCore pid=293119)     return self._op(*args, **kwargs)
+(EngineCore pid=293119)            ^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/mamba_mixer2.py", line 1278, in mamba_mixer2
+(EngineCore pid=293119)     self.conv_ssm_forward(projected_states=projected_states, output=output)
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/mamba_mixer2.py", line 768, in conv_ssm_forward
+(EngineCore pid=293119)     self._warmup_ssd_kernels(projected_states)
+(EngineCore pid=293119)   File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/mamba_mixer2.py", line 661, in _warmup_ssd_kernels
+(EngineCore pid=293119)     torch.randn(
+(EngineCore pid=293119) RuntimeError: Device id: 0 QID: 0 Msg: Failed to throttle stream submission. Error code: 500
+Traceback (most recent call last):
+  File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_hybrid_spd/run_hybrid_spd.py", line 232, in <module>
+    sys.exit(child(a[1], a[2], a[3] if len(a) > 3 else DEFAULT_MODEL, bypass))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_hybrid_spd/run_hybrid_spd.py", line 140, in child
+    llm = LLM(**kwargs)
+          ^^^^^^^^^^^^^
+  File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/entrypoints/llm.py", line 343, in __init__
+    self.llm_engine = LLMEngine.from_engine_args(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/engine/llm_engine.py", line 184, in from_engine_args
+    return cls(
+           ^^^^
+  File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/engine/llm_engine.py", line 109, in __init__
+    self.engine_core = EngineCoreClient.make_client(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/engine/core_client.py", line 122, in make_client
+    return SyncMPClient(
+           ^^^^^^^^^^^^^
+  File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/engine/core_client.py", line 880, in __init__
+    super().__init__(
+  File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/engine/core_client.py", line 656, in __init__
+    with launch_core_engines(
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/contextlib.py", line 144, in __exit__
+    next(self.gen)
+  File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/engine/utils.py", line 1240, in launch_core_engines
+    wait_for_engine_startup(
+  File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/engine/utils.py", line 1320, in wait_for_engine_startup
+    raise RuntimeError(
+RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}

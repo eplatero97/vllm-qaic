@@ -1,0 +1,90 @@
+{
+ "baseline": {
+  "error": null,
+  "num_draft_tokens": 0,
+  "num_accepted_tokens": 0,
+  "probe": {
+   "steps": 1505,
+   "steps_with_spec_decodes": 0,
+   "zero_draft_decode_rows": 0,
+   "hazard_rows": 0,
+   "hazard_samples": [],
+   "block_shape_sample": [
+    1,
+    1
+   ]
+  }
+ },
+ "ngram": {
+  "error": null,
+  "num_draft_tokens": 429,
+  "num_accepted_tokens": 360,
+  "probe": {
+   "steps": 483,
+   "steps_with_spec_decodes": 397,
+   "zero_draft_decode_rows": 0,
+   "hazard_rows": 0,
+   "hazard_samples": [],
+   "block_shape_sample": [
+    1,
+    5
+   ]
+  },
+  "vs_baseline_equal": [
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false
+  ],
+  "vs_baseline_first_div": [
+   0,
+   3,
+   0,
+   3,
+   1,
+   1,
+   0,
+   1
+  ]
+ },
+ "suffix": {
+  "error": null,
+  "num_draft_tokens": 417,
+  "num_accepted_tokens": 409,
+  "probe": {
+   "steps": 386,
+   "steps_with_spec_decodes": 344,
+   "zero_draft_decode_rows": 0,
+   "hazard_rows": 0,
+   "hazard_samples": [],
+   "block_shape_sample": [
+    1,
+    5
+   ]
+  },
+  "vs_baseline_equal": [
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false
+  ],
+  "vs_baseline_first_div": [
+   1,
+   2,
+   0,
+   0,
+   1,
+   0,
+   1,
+   1
+  ]
+ }
+}

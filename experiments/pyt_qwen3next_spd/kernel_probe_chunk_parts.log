@@ -1,0 +1,204 @@
+Caught Pytorch Warning in QAicWarningHandler: Warning only once for all operators,  other operators may also be overridden.
+  Overriding a previously registered kernel for the same operator and the same dispatch key
+  operator: aten::_has_compatible_shallow_copy_type(Tensor self, Tensor from) -> bool
+    registered at /__w/pytorch/pytorch/build/aten/src/ATen/RegisterSchema.cpp:6
+  dispatch key: (catch all)
+  previous kernel: registered at /__w/pytorch/pytorch/build/aten/src/ATen/RegisterCompositeImplicitAutograd_0.cpp:8056
+       new kernel: registered at /local/mnt/workspace/qraniumcitest/ci2/workspace/Generic-CI-Design/Qranium-Module-Build/pytorch/qaictorch/torch_qaic/csrc/RegisterQAicCore.cpp:396
+INFO 11-20 11:08:31 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 11-20 11:08:31 [__init__.py:54] - qaic -> vllm_qaic:register
+INFO 11-20 11:08:31 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 11-20 11:08:31 [__init__.py:272] Platform plugin qaic is activated
+WARNING 11-20 11:08:31 [platform.py:749] Pin memory is not supported on Qaic.
+stage=chunk_parts H=1 HV=2 K=128 V=128 W=4 D=512 S=6 POOL=10 dtype=torch.float16 FLA_CHUNK_SIZE=64
+Loading QAic Ops library from: /opt/qti-aic/dev/lib/common/qaicmlops/libQAicV68Ops.so
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/third_party/flash_linear_attention/ops/fused_gdn_prefill_post_conv.py:20:1: warning: Cannot transform tensor of pointers into a single base pointer with tensor of offsets
+def _fused_post_conv_kernel(
+^
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/third_party/flash_linear_attention/ops/fused_gdn_prefill_post_conv.py:20:1: note: see current operation: 
+module {
+  tt.func public @_fused_post_conv_kernel(%arg0: !tt.ptr<f16> {tt.divisibility = 16 : i32}, %arg1: !tt.ptr<f16> {tt.divisibility = 16 : i32}, %arg2: !tt.ptr<f16> {tt.divisibility = 16 : i32}, %arg3: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg4: !tt.ptr<f16> {tt.divisibility = 16 : i32}, %arg5: !tt.ptr<f16> {tt.divisibility = 128 : i32}, %arg6: !tt.ptr<f16> {tt.divisibility = 16 : i32}, %arg7: !tt.ptr<f16> {tt.divisibility = 16 : i32}, %arg8: !tt.ptr<f32> {tt.divisibility = 128 : i32}, %arg9: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg10: i32 {tt.divisibility = 16 : i32}, %arg11: i32, %arg12: i32, %arg13: i32 {tt.divisibility = 16 : i32}, %arg14: i32 {tt.divisibility = 16 : i32}, %arg15: i32 {tt.divisibility = 16 : i32}, %arg16: i32 {tt.divisibility = 16 : i32}) attributes {noinline = false} {
+    %c0_i32 = arith.constant 0 : i32
+    %c0_i32_0 = arith.constant 0 : i32
+    %c0_i32_1 = arith.constant 0 : i32
+    %c0_i32_2 = arith.constant 0 : i32
+    %c0_i32_3 = arith.constant 0 : i32
+    %c0_i32_4 = arith.constant 0 : i32
+    %c0_i32_5 = arith.constant 0 : i32
+    %c0_i32_6 = arith.constant 0 : i32
+    %c0_i32_7 = arith.constant 0 : i32
+    %c0_i32_8 = arith.constant 0 : i32
+    %c2 = arith.constant 2 : index
+    %c256 = arith.constant 256 : index
+    %c128 = arith.constant 128 : index
+    %cst = arith.constant 0.000000e+00 : f16
+    %c16 = arith.constant 16 : index
+    %cst_9 = arith.constant dense<2.000000e+01> : tensor<16xf32>
+    %cst_10 = arith.constant dense<0.000000e+00> : tensor<16xf32>
+    %cst_11 = arith.constant 0.000000e+00 : f32
+    %cst_12 = arith.constant dense<1.000000e+00> : tensor<16xf32>
+    %cst_13 = arith.constant dense<9.99999997E-7> : tensor<16xf32>
+    %c128_i32 = arith.constant 128 : i32
+    %c1_i32 = arith.constant 1 : i32
+    %c16_i32 = arith.constant 16 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = tt.get_program_id y : i32
+    %2 = arith.muli %0, %c16_i32 : i32
+    %3 = arith.index_cast %2 : i32 to index
+    %4 = arith.cmpi slt, %1, %c1_i32 : i32
+    scf.if %4 {
+      %5 = arith.muli %1, %c128_i32 : i32
+      %6 = arith.index_cast %5 : i32 to index
+      %7 = arith.index_cast %arg10 : i32 to index
+      %8 = arith.muli %3, %7 : index
+      %9 = arith.addi %8, %6 : index
+      %10 = tts.make_tptr %arg0 to sizes: [16, 128], strides: [%7, 1], offsets: [%9, 0], shape: [0, 0], order: [] : <f16> to tensor<16x128x!tt.ptr<f16>>
+      %11 = arith.addi %3, %c16 : index
+      %12 = arith.index_cast %arg16 : i32 to index
+      %13 = arith.minsi %11, %12 : index
+      %14 = arith.maxsi %13, %3 : index
+      %15 = arith.subi %14, %3 : index
+      %16 = arith.minsi %15, %c16 : index
+      %17 = "tts.load"(%10, %16, %cst) <{operandSegmentSizes = array<i32: 1, 1, 1>, static_mask_dims = array<i64: -9223372036854775808, 128>}> : (tensor<16x128x!tt.ptr<f16>>, index, f16) -> tensor<16x128xf16>
+      %18 = arith.extf %17 : tensor<16x128xf16> to tensor<16x128xf32>
+      %19 = arith.addi %8, %c128 : index
+      %20 = arith.addi %19, %6 : index
+      %21 = tts.make_tptr %arg0 to sizes: [16, 128], strides: [%7, 1], offsets: [%20, 0], shape: [0, 0], order: [] : <f16> to tensor<16x128x!tt.ptr<f16>>
+      %22 = "tts.load"(%21, %16, %cst) <{operandSegmentSizes = array<i32: 1, 1, 1>, static_mask_dims = array<i64: -9223372036854775808, 128>}> : (tensor<16x128x!tt.ptr<f16>>, index, f16) -> tensor<16x128xf16>
+      %23 = arith.extf %22 : tensor<16x128xf16> to tensor<16x128xf32>
+      %24 = arith.mulf %18, %18 : tensor<16x128xf32>
+      %25 = "tt.reduce"(%24) <{axis = 1 : i32}> ({
+      ^bb0(%arg17: f32, %arg18: f32):
+        %50 = arith.addf %arg17, %arg18 : f32
+        tt.reduce.return %50 : f32
+      }) : (tensor<16x128xf32>) -> tensor<16xf32>
+      %26 = arith.addf %25, %cst_13 : tensor<16xf32>
+      %27 = math.sqrt %26 : tensor<16xf32>
+      %28 = arith.divf %cst_12, %27 : tensor<16xf32>
+      %29 = tt.expand_dims %28 {axis = 1 : i32} : tensor<16xf32> -> tensor<16x1xf32>
+      %30 = tt.broadcast %29 : tensor<16x1xf32> -> tensor<16x128xf32>
+      %31 = arith.mulf %18, %30 : tensor<16x128xf32>
+      %32 = arith.mulf %23, %23 : tensor<16x128xf32>
+      %33 = "tt.reduce"(%32) <{axis = 1 : i32}> ({
+      ^bb0(%arg17: f32, %arg18: f32):
+        %50 = arith.addf %arg17, %arg18 : f32
+        tt.reduce.return %50 : f32
+      }) : (tensor<16x128xf32>) -> tensor<16xf32>
+      %34 = arith.addf %33, %cst_13 : tensor<16xf32>
+      %35 = math.sqrt %34 : tensor<16xf32>
+      %36 = arith.divf %cst_12, %35 : tensor<16xf32>
+      %37 = tt.expand_dims %36 {axis = 1 : i32} : tensor<16xf32> -> tensor<16x1xf32>
+      %38 = tt.broadcast %37 : tensor<16x1xf32> -> tensor<16x128xf32>
+      %39 = arith.mulf %23, %38 : tensor<16x128xf32>
+      %40 = arith.index_cast %arg13 : i32 to index
+      %41 = arith.muli %3, %40 : index
+      %42 = arith.addi %41, %6 : index
+      %43 = tts.make_tptr %arg5 to sizes: [16, 128], strides: [%40, 1], offsets: [%42, 0], shape: [0, 0], order: [] : <f16> to tensor<16x128x!tt.ptr<f16>>
+      %44 = arith.truncf %31 : tensor<16x128xf32> to tensor<16x128xf16>
+      "tts.store"(%43, %44, %16) <{static_mask_dims = array<i64: -9223372036854775808, 128>}> : (tensor<16x128x!tt.ptr<f16>>, tensor<16x128xf16>, index) -> ()
+      %45 = arith.index_cast %arg14 : i32 to index
+      %46 = arith.muli %3, %45 : index
+      %47 = arith.addi %46, %6 : index
+      %48 = tts.make_tptr %arg6 to sizes: [16, 128], strides: [%45, 1], offsets: [%47, 0], shape: [0, 0], order: [] : <f16> to tensor<16x128x!tt.ptr<f16>>
+      %49 = arith.truncf %39 : tensor<16x128xf32> to tensor<16x128xf16>
+      "tts.store"(%48, %49, %16) <{static_mask_dims = array<i64: -9223372036854775808, 128>}> : (tensor<16x128x!tt.ptr<f16>>, tensor<16x128xf16>, index) -> ()
+    } else {
+      %5 = arith.subi %1, %c1_i32 : i32
+      %6 = arith.index_cast %5 : i32 to index
+      %7 = arith.muli %5, %c128_i32 : i32
+      %8 = arith.index_cast %7 : i32 to index
+      %9 = arith.index_cast %arg10 : i32 to index
+      %10 = arith.muli %3, %9 : index
+      %11 = arith.addi %10, %c256 : index
+      %12 = arith.addi %11, %8 : index
+      %13 = tts.make_tptr %arg0 to sizes: [16, 128], strides: [%9, 1], offsets: [%12, 0], shape: [0, 0], order: [] : <f16> to tensor<16x128x!tt.ptr<f16>>
+      %14 = arith.addi %3, %c16 : index
+      %15 = arith.index_cast %arg16 : i32 to index
+      %16 = arith.minsi %14, %15 : index
+      %17 = arith.maxsi %16, %3 : index
+      %18 = arith.subi %17, %3 : index
+      %19 = arith.minsi %18, %c16 : index
+      %20 = "tts.load"(%13, %19, %cst) <{operandSegmentSizes = array<i32: 1, 1, 1>, static_mask_dims = array<i64: -9223372036854775808, 128>}> : (tensor<16x128x!tt.ptr<f16>>, index, f16) -> tensor<16x128xf16>
+      %21 = arith.index_cast %arg15 : i32 to index
+      %22 = arith.muli %3, %21 : index
+      %23 = arith.addi %22, %8 : index
+      %24 = tts.make_tptr %arg7 to sizes: [16, 128], strides: [%21, 1], offsets: [%23, 0], shape: [0, 0], order: [] : <f16> to tensor<16x128x!tt.ptr<f16>>
+      "tts.store"(%24, %20, %19) <{static_mask_dims = array<i64: -9223372036854775808, 128>}> : (tensor<16x128x!tt.ptr<f16>>, tensor<16x128xf16>, index) -> ()
+      %25 = tt.addptr %arg3, %5 : !tt.ptr<f32>, i32
+      %26 = tt.load %25 : !tt.ptr<f32>
+      %27 = tt.addptr %arg4, %5 : !tt.ptr<f16>, i32
+      %28 = tt.load %27 : !tt.ptr<f16>
+      %29 = arith.extf %28 : f16 to f32
+      %30 = arith.index_cast %arg11 : i32 to index
+      %31 = arith.muli %3, %30 : index
+      %32 = arith.addi %31, %6 : index
+      %33 = tts.make_tptr %arg1 to sizes: [16], strides: [%30], offsets: [%32], shape: [0], order: [] : <f16> to tensor<16x!tt.ptr<f16>>
+      %34 = "tts.load"(%33, %18, %cst) <{operandSegmentSizes = array<i32: 1, 1, 1>, static_mask_dims = array<i64: -9223372036854775808>}> : (tensor<16x!tt.ptr<f16>>, index, f16) -> tensor<16xf16>
+      %35 = arith.extf %34 : tensor<16xf16> to tensor<16xf32>
+      %36 = arith.index_cast %arg12 : i32 to index
+      %37 = arith.muli %3, %36 : index
+      %38 = arith.addi %37, %6 : index
+      %39 = tts.make_tptr %arg2 to sizes: [16], strides: [%36], offsets: [%38], shape: [0], order: [] : <f16> to tensor<16x!tt.ptr<f16>>
+      %40 = "tts.load"(%39, %18, %cst) <{operandSegmentSizes = array<i32: 1, 1, 1>, static_mask_dims = array<i64: -9223372036854775808>}> : (tensor<16x!tt.ptr<f16>>, index, f16) -> tensor<16xf16>
+      %41 = arith.extf %40 : tensor<16xf16> to tensor<16xf32>
+      %42 = tt.splat %29 : f32 -> tensor<16xf32>
+      %43 = arith.addf %35, %42 : tensor<16xf32>
+      %44 = arith.cmpf ogt, %43, %cst_10 : tensor<16xf32>
+      %45 = arith.subf %cst_10, %43 : tensor<16xf32>
+      %46 = math.exp %45 : tensor<16xf32>
+      %47 = arith.addf %46, %cst_12 : tensor<16xf32>
+      %48 = math.log %47 : tensor<16xf32>
+      %49 = arith.addf %43, %48 : tensor<16xf32>
+      %50 = math.exp %43 : tensor<16xf32>
+      %51 = arith.addf %50, %cst_12 : tensor<16xf32>
+      %52 = math.log %51 : tensor<16xf32>
+      %53 = arith.select %44, %49, %52 : tensor<16xi1>, tensor<16xf32>
+      %54 = arith.cmpf ole, %43, %cst_9 : tensor<16xf32>
+      %55 = arith.select %54, %53, %43 : tensor<16xi1>, tensor<16xf32>
+      %56 = math.exp %26 : f32
+      %57 = arith.subf %cst_11, %56 : f32
+      %58 = tt.splat %57 : f32 -> tensor<16xf32>
+      %59 = arith.mulf %58, %55 : tensor<16xf32>
+      %60 = arith.subf %cst_10, %41 : tensor<16xf32>
+      %61 = math.exp %60 : tensor<16xf32>
+      %62 = arith.addf %61, %cst_12 : tensor<16xf32>
+      %63 = arith.divf %cst_12, %62 : tensor<16xf32>
+      %64 = arith.muli %3, %c2 : index
+      %65 = arith.addi %64, %6 : index
+      %66 = tts.make_tptr %arg8 to sizes: [16], strides: [%c2], offsets: [%65], shape: [0], order: [] : <f32> to tensor<16x!tt.ptr<f32>>
+      "tts.store"(%66, %59, %18) <{static_mask_dims = array<i64: -9223372036854775808>}> : (tensor<16x!tt.ptr<f32>>, tensor<16xf32>, index) -> ()
+      %67 = tts.make_tptr %arg9 to sizes: [16], strides: [%c2], offsets: [%65], shape: [0], order: [] : <f32> to tensor<16x!tt.ptr<f32>>
+      "tts.store"(%67, %63, %18) <{static_mask_dims = array<i64: -9223372036854775808>}> : (tensor<16x!tt.ptr<f32>>, tensor<16xf32>, index) -> ()
+    }
+    tt.return
+  }
+}
+chunk_local_cumsum ran (0.0s)
+  g_cumsum: shape=(1, 64, 2) nan=0 inf=0 absmax=8.225e+01
+  [OK] g_cumsum: max_abs_err=7.629e-06 ref_max=8.225e+01 rel=9.275e-08
+chunk_scaled_dot_kkt_fwd ran (0.0s)
+  A: shape=(1, 64, 2, 64) nan=0 inf=0 absmax=6.827e-02
+  [OK] A (beta*kk^T*exp(dg), strict lower): max_abs_err=1.118e-08 ref_max=6.827e-02 rel=1.637e-07
+solve_tril ran (0.0s)
+  Ai: shape=(1, 64, 2, 64) nan=0 inf=0 absmax=1.000e+00
+  [OK] Ai = (I+A)^-1: max_abs_err=2.942e-05 ref_max=1.000e+00 rel=2.942e-05
+recompute_w_u_fwd ran (0.0s)
+  w: shape=(1, 64, 2, 128) nan=2064 inf=0 absmax=4.102e-02
+  u: shape=(1, 64, 2, 128) nan=0 inf=0 absmax=3.125e+00
+  [MISMATCH] w: max_abs_err=nan ref_max=4.103e-02 rel=nan
+  [OK] u: max_abs_err=9.248e-04 ref_max=3.126e+00 rel=2.959e-04
+chunk_gated_delta_rule_fwd_h ran (0.1s)
+  h (per-chunk initial states): shape=(1, 2, 2, 128, 128) nan=0 inf=0 absmax=4.583e-01
+  v_new: shape=(1, 64, 2, 128) nan=16384 inf=0 absmax=0.000e+00
+  final_state: shape=(2, 2, 128, 128) nan=65536 inf=0 absmax=0.000e+00
+  [OK] h[0,0] == initial state req0: max_abs_err=0.000e+00 ref_max=4.583e-01 rel=0.000e+00
+  [OK] h[0,1] == initial state req1: max_abs_err=0.000e+00 ref_max=0.000e+00 rel=0.000e+00
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/triton/language/core.py:2541: UserWarning: tl.make_block_ptr is deprecated. Use TensorDescriptor or tl.make_tensor_descriptor instead.
+  warn("tl.make_block_ptr is deprecated. Use TensorDescriptor or tl.make_tensor_descriptor instead.")
+chunk_fwd_o ran (0.6s)
+  o: shape=(1, 64, 2, 128) nan=16384 inf=0 absmax=0.000e+00
+  [MISMATCH] req0 final_state: max_abs_err=nan ref_max=3.321e-01 rel=nan
+  [MISMATCH] req0 o: max_abs_err=nan ref_max=3.600e-02 rel=nan
+  [MISMATCH] req1 final_state: max_abs_err=nan ref_max=5.358e-01 rel=nan
+  [MISMATCH] req1 o: max_abs_err=nan ref_max=2.313e-02 rel=nan
+STAGE chunk_parts RESULT: OK (6.4s)

@@ -1,0 +1,306 @@
+RUN /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/../../.venv_eager/bin/python -u /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/run_qwen3next_spd.py child baseline /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/m70zspd_baseline.json theo77186/Qwen3-Next-70M-TinyStories --max-num-seqs 8 --bypass-hybrid > /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/m70zspd_baseline.log
+  rc=0
+RUN /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/../../.venv_eager/bin/python -u /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/run_qwen3next_spd.py child ngram /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/m70zspd_ngram.json theo77186/Qwen3-Next-70M-TinyStories --max-num-seqs 8 --bypass-hybrid > /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/m70zspd_ngram.log
+  rc=0
+RUN /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/../../.venv_eager/bin/python -u /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/run_qwen3next_spd.py child suffix /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/m70zspd_suffix.json theo77186/Qwen3-Next-70M-TinyStories --max-num-seqs 8 --bypass-hybrid > /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/m70zspd_suffix.log
+  rc=0
+SUMMARY {
+ "baseline": {
+  "error": null,
+  "num_draft_tokens": 0,
+  "num_accepted_tokens": 0,
+  "probe": {
+   "steps": 186,
+   "steps_with_spec_decodes": 0,
+   "zero_draft_decode_rows": 0,
+   "hazard_rows": 0,
+   "hazard_samples": [],
+   "block_shape_sample": [
+    8,
+    1
+   ]
+  }
+ },
+ "ngram": {
+  "error": null,
+  "num_draft_tokens": 727,
+  "num_accepted_tokens": 165,
+  "probe": {
+   "steps": 156,
+   "steps_with_spec_decodes": 147,
+   "zero_draft_decode_rows": 444,
+   "hazard_rows": 63,
+   "hazard_samples": [
+    {
+     "step": 12,
+     "row": 1,
+     "nat": 2,
+     "seq_len": 20,
+     "blocks": [
+      49,
+      50,
+      51,
+      52,
+      53
+     ]
+    },
+    {
+     "step": 13,
+     "row": 1,
+     "nat": 2,
+     "seq_len": 20,
+     "blocks": [
+      54,
+      55,
+      56,
+      57,
+      58
+     ]
+    },
+    {
+     "step": 14,
+     "row": 1,
+     "nat": 2,
+     "seq_len": 20,
+     "blocks": [
+      59,
+      60,
+      61,
+      62,
+      63
+     ]
+    },
+    {
+     "step": 21,
+     "row": 2,
+     "nat": 2,
+     "seq_len": 22,
+     "blocks": [
+      97,
+      98,
+      99,
+      100,
+      101
+     ]
+    },
+    {
+     "step": 22,
+     "row": 2,
+     "nat": 2,
+     "seq_len": 22,
+     "blocks": [
+      102,
+      103,
+      104,
+      105,
+      106
+     ]
+    },
+    {
+     "step": 23,
+     "row": 2,
+     "nat": 2,
+     "seq_len": 22,
+     "blocks": [
+      107,
+      108,
+      109,
+      110,
+      111
+     ]
+    },
+    {
+     "step": 24,
+     "row": 3,
+     "nat": 3,
+     "seq_len": 24,
+     "blocks": [
+      33,
+      34,
+      35,
+      36,
+      37
+     ]
+    },
+    {
+     "step": 24,
+     "row": 4,
+     "nat": 3,
+     "seq_len": 37,
+     "blocks": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ]
+    }
+   ],
+   "block_shape_sample": [
+    2,
+    5
+   ]
+  },
+  "vs_baseline_equal": [
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false
+  ],
+  "vs_baseline_first_div": [
+   5,
+   2,
+   5,
+   2,
+   6,
+   5,
+   5,
+   3
+  ]
+ },
+ "suffix": {
+  "error": null,
+  "num_draft_tokens": 477,
+  "num_accepted_tokens": 196,
+  "probe": {
+   "steps": 141,
+   "steps_with_spec_decodes": 135,
+   "zero_draft_decode_rows": 243,
+   "hazard_rows": 39,
+   "hazard_samples": [
+    {
+     "step": 21,
+     "row": 1,
+     "nat": 2,
+     "seq_len": 23,
+     "blocks": [
+      49,
+      50,
+      51,
+      52,
+      53
+     ]
+    },
+    {
+     "step": 22,
+     "row": 1,
+     "nat": 2,
+     "seq_len": 23,
+     "blocks": [
+      54,
+      55,
+      56,
+      57,
+      58
+     ]
+    },
+    {
+     "step": 23,
+     "row": 1,
+     "nat": 2,
+     "seq_len": 23,
+     "blocks": [
+      59,
+      60,
+      61,
+      62,
+      63
+     ]
+    },
+    {
+     "step": 27,
+     "row": 1,
+     "nat": 2,
+     "seq_len": 28,
+     "blocks": [
+      81,
+      82,
+      83,
+      84,
+      85
+     ]
+    },
+    {
+     "step": 28,
+     "row": 1,
+     "nat": 2,
+     "seq_len": 28,
+     "blocks": [
+      86,
+      87,
+      88,
+      89,
+      90
+     ]
+    },
+    {
+     "step": 29,
+     "row": 1,
+     "nat": 2,
+     "seq_len": 28,
+     "blocks": [
+      91,
+      92,
+      93,
+      94,
+      95
+     ]
+    },
+    {
+     "step": 30,
+     "row": 0,
+     "nat": 2,
+     "seq_len": 26,
+     "blocks": [
+      97,
+      98,
+      99,
+      100,
+      101
+     ]
+    },
+    {
+     "step": 30,
+     "row": 1,
+     "nat": 2,
+     "seq_len": 32,
+     "blocks": [
+      33,
+      34,
+      35,
+      36,
+      37
+     ]
+    }
+   ],
+   "block_shape_sample": [
+    1,
+    5
+   ]
+  },
+  "vs_baseline_equal": [
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false
+  ],
+  "vs_baseline_first_div": [
+   4,
+   2,
+   3,
+   2,
+   4,
+   3,
+   3,
+   3
+  ]
+ }
+}

@@ -1,0 +1,54 @@
+{
+ "baseline": {
+  "error": null,
+  "num_draft_tokens": 0,
+  "num_accepted_tokens": 0,
+  "probe": {
+   "steps": 1516,
+   "steps_with_spec_decodes": 0,
+   "zero_draft_decode_rows": 0,
+   "hazard_rows": 0,
+   "hazard_samples": [],
+   "block_shape_sample": [
+    1,
+    1
+   ]
+  }
+ },
+ "baseline2": {
+  "error": null,
+  "num_draft_tokens": 0,
+  "num_accepted_tokens": 0,
+  "probe": {
+   "steps": 1508,
+   "steps_with_spec_decodes": 0,
+   "zero_draft_decode_rows": 0,
+   "hazard_rows": 0,
+   "hazard_samples": [],
+   "block_shape_sample": [
+    1,
+    1
+   ]
+  },
+  "vs_baseline_equal": [
+   true,
+   true,
+   true,
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "vs_baseline_first_div": [
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ]
+ }
+}

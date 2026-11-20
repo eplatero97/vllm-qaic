@@ -1,0 +1,37 @@
+Caught Pytorch Warning in QAicWarningHandler: Warning only once for all operators,  other operators may also be overridden.
+  Overriding a previously registered kernel for the same operator and the same dispatch key
+  operator: aten::_has_compatible_shallow_copy_type(Tensor self, Tensor from) -> bool
+    registered at /__w/pytorch/pytorch/build/aten/src/ATen/RegisterSchema.cpp:6
+  dispatch key: (catch all)
+  previous kernel: registered at /__w/pytorch/pytorch/build/aten/src/ATen/RegisterCompositeImplicitAutograd_0.cpp:8056
+       new kernel: registered at /local/mnt/workspace/qraniumcitest/ci2/workspace/Generic-CI-Design/Qranium-Module-Build/pytorch/qaictorch/torch_qaic/csrc/RegisterQAicCore.cpp:396
+INFO 11-20 11:21:26 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 11-20 11:21:26 [__init__.py:54] - qaic -> vllm_qaic:register
+INFO 11-20 11:21:26 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 11-20 11:21:26 [__init__.py:272] Platform plugin qaic is activated
+WARNING 11-20 11:21:26 [platform.py:749] Pin memory is not supported on Qaic.
+[probe] patched recompute_w_u_fwd_kernel padding_option=zero (only=k)
+stage=chunk H=1 HV=2 K=128 V=128 W=4 D=512 S=6 POOL=10 dtype=torch.float16 FLA_CHUNK_SIZE=64
+Loading QAic Ops library from: /opt/qti-aic/dev/lib/common/qaicmlops/libQAicV68Ops.so
+fused_post_conv_prep ran (0.5s)
+  [OK] post_conv q (l2norm): max_abs_err=1.170e-04 ref_max=3.353e-01 rel=3.489e-04
+  [OK] post_conv k (l2norm): max_abs_err=1.152e-04 ref_max=3.729e-01 rel=3.088e-04
+  [OK] post_conv v: max_abs_err=0.000e+00 ref_max=3.793e+00 rel=0.000e+00
+  [OK] post_conv g: max_abs_err=9.537e-07 ref_max=5.271e+00 rel=1.809e-07
+  [OK] post_conv beta: max_abs_err=5.960e-08 ref_max=9.301e-01 rel=6.409e-08
+CPU fallback op: aten::_index_put_impl_, execution started.
+CPU fallback op: aten::_index_put_impl_, time elapsed (us): 4596
+fallback arguments: Tensor(size=[2, 2, 128, 128],strides=[32768, 16384, 128, 1],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=131072,storage_nbytes=131072);;[Tensor(size=[2],strides=[1],offset=0,is_cont=true,dtype=Bool,device=qaic:0,tensor_nbytes=2,storage_nbytes=2)?;];;Tensor(size=[],strides=[],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=2,storage_nbytes=2);;Scalar(dtype=Bool,value=false);;Scalar(dtype=Bool,value=false);;
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/triton/language/core.py:2541: UserWarning: tl.make_block_ptr is deprecated. Use TensorDescriptor or tl.make_tensor_descriptor instead.
+  warn("tl.make_block_ptr is deprecated. Use TensorDescriptor or tl.make_tensor_descriptor instead.")
+chunk_gated_delta_rule ran (0.7s)
+CPU fallback op: aten::_index_put_impl_, execution started.
+CPU fallback op: aten::_index_put_impl_, time elapsed (us): 2170
+fallback arguments: Tensor(size=[10, 2, 128, 128],strides=[32768, 16384, 128, 1],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=655360,storage_nbytes=655360);;[Tensor(size=[2],strides=[1],offset=0,is_cont=true,dtype=Int,device=qaic:0,tensor_nbytes=8,storage_nbytes=8)?;];;Tensor(size=[2, 2, 128, 128],strides=[32768, 16384, 128, 1],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=131072,storage_nbytes=131072);;Scalar(dtype=Bool,value=false);;Scalar(dtype=Bool,value=false);;
+  [OK] req0 chunk out (len 40, init=True): max_abs_err=2.135e-05 ref_max=3.600e-02 rel=5.930e-04
+  [OK] req0 final_state: max_abs_err=1.469e-04 ref_max=3.321e-01 rel=4.421e-04
+  [OK] req0 ssm pool slot 5 written: max_abs_err=1.983e-04 ref_max=3.321e-01 rel=5.972e-04
+  [OK] req1 chunk out (len 24, init=False): max_abs_err=2.048e-05 ref_max=2.313e-02 rel=8.854e-04
+  [OK] req1 final_state: max_abs_err=2.373e-04 ref_max=5.358e-01 rel=4.429e-04
+  [OK] req1 ssm pool slot 3 written: max_abs_err=2.802e-04 ref_max=5.358e-01 rel=5.230e-04
+STAGE chunk RESULT: OK (1.2s)

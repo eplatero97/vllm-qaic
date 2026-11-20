@@ -1,0 +1,93 @@
+Caught Pytorch Warning in QAicWarningHandler: Warning only once for all operators,  other operators may also be overridden.
+  Overriding a previously registered kernel for the same operator and the same dispatch key
+  operator: aten::_has_compatible_shallow_copy_type(Tensor self, Tensor from) -> bool
+    registered at /__w/pytorch/pytorch/build/aten/src/ATen/RegisterSchema.cpp:6
+  dispatch key: (catch all)
+  previous kernel: registered at /__w/pytorch/pytorch/build/aten/src/ATen/RegisterCompositeImplicitAutograd_0.cpp:8056
+       new kernel: registered at /local/mnt/workspace/qraniumcitest/ci2/workspace/Generic-CI-Design/Qranium-Module-Build/pytorch/qaictorch/torch_qaic/csrc/RegisterQAicCore.cpp:396
+INFO 11-20 11:06:11 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 11-20 11:06:11 [__init__.py:54] - qaic -> vllm_qaic:register
+INFO 11-20 11:06:11 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 11-20 11:06:11 [__init__.py:272] Platform plugin qaic is activated
+WARNING 11-20 11:06:12 [platform.py:749] Pin memory is not supported on Qaic.
+stage=spec H=1 HV=2 K=128 V=128 W=4 D=512 S=6 POOL=10 dtype=torch.float16 FLA_CHUNK_SIZE=64
+Loading QAic Ops library from: /opt/qti-aic/dev/lib/common/qaicmlops/libQAicV68Ops.so
+-- spec step: num_accepted_tokens=[1, 2]
+   ran (3.5s)
+  [OK] 4a req0 a=1 conv out: max_abs_err=1.639e-03 ref_max=3.903e+00 rel=4.199e-04
+  [OK] 4a req0 conv buf slot 5 (shift a-1=0): max_abs_err=0.000e+00 ref_max=3.533e+00 rel=0.000e+00
+  [OK] 4b req0 recurrent out (init from slot 5): max_abs_err=1.588e-05 ref_max=2.690e-02 rel=5.904e-04
+  [OK] 4b req0 slot[0,0]=5 == state after tok 0..0: max_abs_err=2.872e-04 ref_max=6.239e-01 rel=4.604e-04
+  [OK] 4b req0 slot[0,1]=2 == state after tok 0..1: max_abs_err=2.519e-04 ref_max=8.203e-01 rel=3.071e-04
+  [OK] 4b req0 slot[0,2]=7 == state after tok 0..2: max_abs_err=2.134e-04 ref_max=3.844e-01 rel=5.551e-04
+  [OK] 4b req0 slot[0,3]=1 == state after tok 0..3: max_abs_err=3.234e-04 ref_max=6.098e-01 rel=5.303e-04
+  [OK] 4a req1 a=2 conv out: max_abs_err=1.744e-03 ref_max=4.555e+00 rel=3.828e-04
+  [OK] 4a req1 conv buf slot 3 (shift a-1=1): max_abs_err=0.000e+00 ref_max=3.605e+00 rel=0.000e+00
+  [OK] 4b req1 recurrent out (init from slot 6): max_abs_err=1.393e-05 ref_max=3.696e-02 rel=3.768e-04
+  [OK] 4b req1 slot[1,0]=3 == state after tok 0..0: max_abs_err=5.052e-04 ref_max=4.971e-01 rel=1.016e-03
+  [OK] 4b req1 slot[1,1]=6 == state after tok 0..1: max_abs_err=4.561e-04 ref_max=1.112e+00 rel=4.102e-04
+  [OK] 4b req1 slot[1,2]=8 == state after tok 0..2: max_abs_err=4.220e-04 ref_max=7.821e-01 rel=5.396e-04
+  [OK] 4b req1 slot[1,3]=4 == state after tok 0..3: max_abs_err=8.592e-04 ref_max=9.068e-01 rel=9.475e-04
+     control: |out - ref_from_slot[n,0]|max = 2.269e-02 (should be >> err)
+  [OK] unused ssm slots untouched: max_abs_err=0.000e+00 ref_max=3.928e-01 rel=0.000e+00
+  [OK] conv slots other than spec[:,0] untouched: max_abs_err=0.000e+00 ref_max=1.896e+00 rel=0.000e+00
+-- spec step: num_accepted_tokens=[2, 3]
+   ran (1.4s)
+  [OK] 4a req0 a=2 conv out: max_abs_err=1.735e-03 ref_max=3.769e+00 rel=4.605e-04
+  [OK] 4a req0 conv buf slot 5 (shift a-1=1): max_abs_err=0.000e+00 ref_max=3.568e+00 rel=0.000e+00
+  [OK] 4b req0 recurrent out (init from slot 2): max_abs_err=1.275e-05 ref_max=3.177e-02 rel=4.012e-04
+  [OK] 4b req0 slot[0,0]=5 == state after tok 0..0: max_abs_err=4.495e-04 ref_max=1.045e+00 rel=4.300e-04
+  [OK] 4b req0 slot[0,1]=2 == state after tok 0..1: max_abs_err=2.958e-04 ref_max=6.096e-01 rel=4.851e-04
+  [OK] 4b req0 slot[0,2]=7 == state after tok 0..2: max_abs_err=5.074e-04 ref_max=6.329e-01 rel=8.016e-04
+  [OK] 4b req0 slot[0,3]=1 == state after tok 0..3: max_abs_err=4.031e-04 ref_max=5.526e-01 rel=7.296e-04
+     control: |out - ref_from_slot[n,0]|max = 2.490e-02 (should be >> err)
+  [OK] 4a req1 a=3 conv out: max_abs_err=1.769e-03 ref_max=6.428e+00 rel=2.752e-04
+  [OK] 4a req1 conv buf slot 3 (shift a-1=2): max_abs_err=0.000e+00 ref_max=3.676e+00 rel=0.000e+00
+  [OK] 4b req1 recurrent out (init from slot 8): max_abs_err=2.046e-05 ref_max=7.067e-02 rel=2.895e-04
+  [OK] 4b req1 slot[1,0]=3 == state after tok 0..0: max_abs_err=1.172e-04 ref_max=3.031e-01 rel=3.867e-04
+  [OK] 4b req1 slot[1,1]=6 == state after tok 0..1: max_abs_err=2.486e-04 ref_max=2.546e-01 rel=9.762e-04
+  [OK] 4b req1 slot[1,2]=8 == state after tok 0..2: max_abs_err=7.390e-04 ref_max=1.704e+00 rel=4.336e-04
+  [OK] 4b req1 slot[1,3]=4 == state after tok 0..3: max_abs_err=7.474e-04 ref_max=2.175e+00 rel=3.437e-04
+     control: |out - ref_from_slot[n,0]|max = 1.508e-02 (should be >> err)
+  [OK] unused ssm slots untouched: max_abs_err=0.000e+00 ref_max=4.055e-01 rel=0.000e+00
+  [OK] conv slots other than spec[:,0] untouched: max_abs_err=0.000e+00 ref_max=2.148e+00 rel=0.000e+00
+-- spec step: num_accepted_tokens=[3, 4]
+   ran (1.4s)
+  [OK] 4a req0 a=3 conv out: max_abs_err=2.741e-03 ref_max=6.220e+00 rel=4.407e-04
+  [OK] 4a req0 conv buf slot 5 (shift a-1=2): max_abs_err=0.000e+00 ref_max=3.793e+00 rel=0.000e+00
+  [OK] 4b req0 recurrent out (init from slot 7): max_abs_err=8.278e-06 ref_max=1.920e-02 rel=4.310e-04
+  [OK] 4b req0 slot[0,0]=5 == state after tok 0..0: max_abs_err=2.787e-04 ref_max=4.169e-01 rel=6.684e-04
+  [OK] 4b req0 slot[0,1]=2 == state after tok 0..1: max_abs_err=3.191e-04 ref_max=5.557e-01 rel=5.742e-04
+  [OK] 4b req0 slot[0,2]=7 == state after tok 0..2: max_abs_err=3.602e-04 ref_max=4.972e-01 rel=7.244e-04
+  [OK] 4b req0 slot[0,3]=1 == state after tok 0..3: max_abs_err=2.961e-04 ref_max=6.345e-01 rel=4.667e-04
+     control: |out - ref_from_slot[n,0]|max = 2.102e-02 (should be >> err)
+  [OK] 4a req1 a=4 conv out: max_abs_err=1.802e-03 ref_max=5.565e+00 rel=3.238e-04
+  [OK] 4a req1 conv buf slot 3 (shift a-1=3): max_abs_err=0.000e+00 ref_max=3.164e+00 rel=0.000e+00
+  [OK] 4b req1 recurrent out (init from slot 4): max_abs_err=1.919e-05 ref_max=3.012e-02 rel=6.370e-04
+  [OK] 4b req1 slot[1,0]=3 == state after tok 0..0: max_abs_err=3.156e-04 ref_max=8.496e-01 rel=3.715e-04
+  [OK] 4b req1 slot[1,1]=6 == state after tok 0..1: max_abs_err=7.293e-04 ref_max=8.009e-01 rel=9.107e-04
+  [OK] 4b req1 slot[1,2]=8 == state after tok 0..2: max_abs_err=4.971e-04 ref_max=7.565e-01 rel=6.572e-04
+  [OK] 4b req1 slot[1,3]=4 == state after tok 0..3: max_abs_err=6.328e-04 ref_max=1.618e+00 rel=3.910e-04
+     control: |out - ref_from_slot[n,0]|max = 6.126e-03 (should be >> err)
+  [OK] unused ssm slots untouched: max_abs_err=0.000e+00 ref_max=4.414e-01 rel=0.000e+00
+  [OK] conv slots other than spec[:,0] untouched: max_abs_err=0.000e+00 ref_max=2.215e+00 rel=0.000e+00
+-- spec step: num_accepted_tokens=[4, 1]
+   ran (0.0s)
+  [OK] 4a req0 a=4 conv out: max_abs_err=1.741e-03 ref_max=3.937e+00 rel=4.422e-04
+  [OK] 4a req0 conv buf slot 5 (shift a-1=3): max_abs_err=0.000e+00 ref_max=3.486e+00 rel=0.000e+00
+  [OK] 4b req0 recurrent out (init from slot 1): max_abs_err=1.206e-05 ref_max=2.277e-02 rel=5.296e-04
+  [OK] 4b req0 slot[0,0]=5 == state after tok 0..0: max_abs_err=4.511e-04 ref_max=7.014e-01 rel=6.431e-04
+  [OK] 4b req0 slot[0,1]=2 == state after tok 0..1: max_abs_err=7.781e-04 ref_max=9.278e-01 rel=8.387e-04
+  [OK] 4b req0 slot[0,2]=7 == state after tok 0..2: max_abs_err=9.555e-04 ref_max=1.496e+00 rel=6.385e-04
+  [OK] 4b req0 slot[0,3]=1 == state after tok 0..3: max_abs_err=4.832e-04 ref_max=9.644e-01 rel=5.010e-04
+     control: |out - ref_from_slot[n,0]|max = 1.475e-02 (should be >> err)
+  [OK] 4a req1 a=1 conv out: max_abs_err=2.029e-03 ref_max=4.565e+00 rel=4.445e-04
+  [OK] 4a req1 conv buf slot 3 (shift a-1=0): max_abs_err=0.000e+00 ref_max=3.494e+00 rel=0.000e+00
+  [OK] 4b req1 recurrent out (init from slot 3): max_abs_err=1.516e-05 ref_max=2.138e-02 rel=7.091e-04
+  [OK] 4b req1 slot[1,0]=3 == state after tok 0..0: max_abs_err=2.644e-04 ref_max=3.571e-01 rel=7.404e-04
+  [OK] 4b req1 slot[1,1]=6 == state after tok 0..1: max_abs_err=3.801e-04 ref_max=5.568e-01 rel=6.828e-04
+  [OK] 4b req1 slot[1,2]=8 == state after tok 0..2: max_abs_err=3.165e-04 ref_max=5.865e-01 rel=5.397e-04
+  [OK] 4b req1 slot[1,3]=4 == state after tok 0..3: max_abs_err=3.414e-04 ref_max=6.754e-01 rel=5.054e-04
+  [OK] unused ssm slots untouched: max_abs_err=0.000e+00 ref_max=4.438e-01 rel=0.000e+00
+  [OK] conv slots other than spec[:,0] untouched: max_abs_err=0.000e+00 ref_max=2.070e+00 rel=0.000e+00
+STAGE spec RESULT: OK (6.3s)

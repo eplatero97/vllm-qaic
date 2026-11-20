@@ -1,0 +1,48 @@
+Caught Pytorch Warning in QAicWarningHandler: Warning only once for all operators,  other operators may also be overridden.
+  Overriding a previously registered kernel for the same operator and the same dispatch key
+  operator: aten::_has_compatible_shallow_copy_type(Tensor self, Tensor from) -> bool
+    registered at /__w/pytorch/pytorch/build/aten/src/ATen/RegisterSchema.cpp:6
+  dispatch key: (catch all)
+  previous kernel: registered at /__w/pytorch/pytorch/build/aten/src/ATen/RegisterCompositeImplicitAutograd_0.cpp:8056
+       new kernel: registered at /local/mnt/workspace/qraniumcitest/ci2/workspace/Generic-CI-Design/Qranium-Module-Build/pytorch/qaictorch/torch_qaic/csrc/RegisterQAicCore.cpp:396
+INFO 11-20 11:19:58 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 11-20 11:19:58 [__init__.py:54] - qaic -> vllm_qaic:register
+INFO 11-20 11:19:58 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 11-20 11:19:58 [__init__.py:272] Platform plugin qaic is activated
+WARNING 11-20 11:19:58 [platform.py:749] Pin memory is not supported on Qaic.
+[probe] patched recompute_w_u_fwd_kernel padding_option=zero (only=k)
+stage=chunk_parts H=1 HV=2 K=128 V=128 W=4 D=512 S=6 POOL=10 dtype=torch.float16 FLA_CHUNK_SIZE=64
+Loading QAic Ops library from: /opt/qti-aic/dev/lib/common/qaicmlops/libQAicV68Ops.so
+chunk_local_cumsum ran (0.0s)
+  g_cumsum: shape=(1, 64, 2) nan=0 inf=0 absmax=8.225e+01
+  [OK] g_cumsum: max_abs_err=7.629e-06 ref_max=8.225e+01 rel=9.275e-08
+chunk_scaled_dot_kkt_fwd ran (0.0s)
+  A: shape=(1, 64, 2, 64) nan=0 inf=0 absmax=6.827e-02
+  [OK] A (beta*kk^T*exp(dg), strict lower): max_abs_err=1.118e-08 ref_max=6.827e-02 rel=1.637e-07
+solve_tril ran (0.0s)
+  Ai: shape=(1, 64, 2, 64) nan=0 inf=0 absmax=1.000e+00
+  [OK] Ai = (I+A)^-1: max_abs_err=2.942e-05 ref_max=1.000e+00 rel=2.942e-05
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/triton/language/core.py:2541: UserWarning: tl.make_block_ptr is deprecated. Use TensorDescriptor or tl.make_tensor_descriptor instead.
+  warn("tl.make_block_ptr is deprecated. Use TensorDescriptor or tl.make_tensor_descriptor instead.")
+recompute_w_u_fwd ran (6.8s)
+  w: shape=(1, 64, 2, 128) nan=0 inf=0 absmax=4.102e-02
+    w NaN req0 hv0: 0 elems, rows(local)=[] n_rows=0 cols_per_row=[]
+    w NaN req0 hv1: 0 elems, rows(local)=[] n_rows=0 cols_per_row=[]
+    w NaN req1 hv0: 0 elems, rows(local)=[] n_rows=0 cols_per_row=[]
+    w NaN req1 hv1: 0 elems, rows(local)=[] n_rows=0 cols_per_row=[]
+  u: shape=(1, 64, 2, 128) nan=0 inf=0 absmax=3.125e+00
+  [OK] w: max_abs_err=1.477e-05 ref_max=4.103e-02 rel=3.600e-04
+  [OK] u: max_abs_err=9.248e-04 ref_max=3.126e+00 rel=2.959e-04
+chunk_gated_delta_rule_fwd_h ran (0.1s)
+  h (per-chunk initial states): shape=(1, 2, 2, 128, 128) nan=0 inf=0 absmax=4.583e-01
+  v_new: shape=(1, 64, 2, 128) nan=0 inf=0 absmax=3.135e+00
+  final_state: shape=(2, 2, 128, 128) nan=0 inf=0 absmax=5.356e-01
+  [OK] h[0,0] == initial state req0: max_abs_err=0.000e+00 ref_max=4.583e-01 rel=0.000e+00
+  [OK] h[0,1] == initial state req1: max_abs_err=0.000e+00 ref_max=0.000e+00 rel=0.000e+00
+chunk_fwd_o ran (0.0s)
+  o: shape=(1, 64, 2, 128) nan=0 inf=0 absmax=3.598e-02
+  [OK] req0 final_state: max_abs_err=1.469e-04 ref_max=3.321e-01 rel=4.421e-04
+  [OK] req0 o: max_abs_err=2.135e-05 ref_max=3.600e-02 rel=5.930e-04
+  [OK] req1 final_state: max_abs_err=2.373e-04 ref_max=5.358e-01 rel=4.429e-04
+  [OK] req1 o: max_abs_err=2.048e-05 ref_max=2.313e-02 rel=8.854e-04
+STAGE chunk_parts RESULT: OK (7.6s)

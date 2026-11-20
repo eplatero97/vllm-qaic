@@ -1,0 +1,28 @@
+Caught Pytorch Warning in QAicWarningHandler: Warning only once for all operators,  other operators may also be overridden.
+  Overriding a previously registered kernel for the same operator and the same dispatch key
+  operator: aten::_has_compatible_shallow_copy_type(Tensor self, Tensor from) -> bool
+    registered at /__w/pytorch/pytorch/build/aten/src/ATen/RegisterSchema.cpp:6
+  dispatch key: (catch all)
+  previous kernel: registered at /__w/pytorch/pytorch/build/aten/src/ATen/RegisterCompositeImplicitAutograd_0.cpp:8056
+       new kernel: registered at /local/mnt/workspace/qraniumcitest/ci2/workspace/Generic-CI-Design/Qranium-Module-Build/pytorch/qaictorch/torch_qaic/csrc/RegisterQAicCore.cpp:396
+INFO 11-19 20:29:19 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 11-19 20:29:19 [__init__.py:54] - qaic -> vllm_qaic:register
+INFO 11-19 20:29:19 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 11-19 20:29:19 [__init__.py:272] Platform plugin qaic is activated
+WARNING 11-19 20:29:19 [platform.py:745] Pin memory is not supported on Qaic.
+forced chunk_state config: BLOCK_SIZE_M: 32, BLOCK_SIZE_N: 32, BLOCK_SIZE_K: 32, num_warps: 4, num_ctas: 1, num_stages: 3, maxnreg: None
+Loading QAic Ops library from: /opt/qti-aic/dev/lib/common/qaicmlops/libQAicV68Ops.so
+chunk_cumsum OK (96.2s)
+cumsum max abs err: 0.0001068115234375 dt err: 1.9073486328125e-06
+
+QAIC_MSG: Device logs are being logged in file ./qaic-dumps/QAicMLDevice0_nPgfPE.log
+
+Traceback (most recent call last):
+  File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_hybrid_spd/kernel_probe.py", line 48, in <module>
+    torch.qaic.synchronize()
+  File "/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/torch_qaic/qaic/__init__.py", line 191, in synchronize
+    return torch_qaic._C._synchronize_device()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Device id: 0 QID: 0 Msg: Failed to synchronize stream. Error code: 500
+
+QAIC_WARNING: Failed to free device: Device id: 0 QID: 0 Msg: Failed to synchronize stream. Error code: 500

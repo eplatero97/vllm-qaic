@@ -1,0 +1,768 @@
+Caught Pytorch Warning in QAicWarningHandler: Warning only once for all operators,  other operators may also be overridden.
+  Overriding a previously registered kernel for the same operator and the same dispatch key
+  operator: aten::_has_compatible_shallow_copy_type(Tensor self, Tensor from) -> bool
+    registered at /__w/pytorch/pytorch/build/aten/src/ATen/RegisterSchema.cpp:6
+  dispatch key: (catch all)
+  previous kernel: registered at /__w/pytorch/pytorch/build/aten/src/ATen/RegisterCompositeImplicitAutograd_0.cpp:8056
+       new kernel: registered at /local/mnt/workspace/qraniumcitest/ci2/workspace/Generic-CI-Design/Qranium-Module-Build/pytorch/qaictorch/torch_qaic/csrc/RegisterQAicCore.cpp:396
+INFO 11-20 12:25:01 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 11-20 12:25:01 [__init__.py:54] - qaic -> vllm_qaic:register
+INFO 11-20 12:25:01 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 11-20 12:25:01 [__init__.py:272] Platform plugin qaic is activated
+WARNING 11-20 12:25:01 [platform.py:749] Pin memory is not supported on Qaic.
+[probe] patched recompute_w_u_fwd_kernel padding_option=zero (only=all)
+INFO 11-20 12:25:08 [api_utils.py:286] non-default args: {'dtype': 'float16', 'max_model_len': 512, 'enable_prefix_caching': False, 'gpu_memory_utilization': 0.9, 'kv_cache_memory_bytes': 1073741824, 'max_num_seqs': 8, 'enforce_eager': True, 'speculative_config': {'method': 'ngram', 'num_speculative_tokens': 4, 'prompt_lookup_min': 1, 'prompt_lookup_max': 4}, 'async_scheduling': False, 'model': 'theo77186/Qwen3-Next-70M-TinyStories'}
+WARNING 11-20 12:25:09 [mooncake_connector.py:75] Please install mooncake by following the instructions at https://github.com/kvcache-ai/Mooncake/blob/main/doc/en/build.md to run VLLM with MooncakeTransferEngine.
+[transformers] `SiglipImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `SiglipImageProcessor` instead.
+WARNING 11-20 12:25:09 [arg_utils.py:1812] The global random seed is set to 0. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+INFO 11-20 12:25:09 [model.py:692] Resolved architecture: Qwen3NextForCausalLM
+WARNING 11-20 12:25:09 [model.py:2364] Casting torch.bfloat16 to torch.float16.
+INFO 11-20 12:25:09 [model.py:2030] Using max model len 512
+INFO 11-20 12:25:09 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=4096.
+WARNING 11-20 12:25:10 [vllm.py:1547] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+WARNING 11-20 12:25:10 [vllm.py:1570] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+INFO 11-20 12:25:10 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+WARNING 11-20 12:25:10 [vllm.py:2135] max_num_scheduled_tokens is set to 4096 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+WARNING 11-20 12:25:10 [vllm.py:716] Model Runner V2 does not yet support speculative method 'ngram'; using the V1 model runner instead.
+INFO 11-20 12:25:10 [compilation.py:336] Enabled custom fusions: norm_quant, act_quant
+INFO 11-20 12:25:12 [core.py:123] Initializing a V1 LLM engine (v0.30.0) with config: model='theo77186/Qwen3-Next-70M-TinyStories', speculative_config=SpeculativeConfig(method='ngram', model=None, num_spec_tokens=4), tokenizer='theo77186/Qwen3-Next-70M-TinyStories', skip_tokenizer_init=False, tokenizer_mode=auto, revision=main, tokenizer_revision=main, trust_remote_code=False, dtype=torch.float16, max_seq_len=512, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=None, quantization_config=None, enforce_eager=True, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=qaic, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, per_request_spec_decode_metrics='none', kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=0, served_model_name=theo77186/Qwen3-Next-70M-TinyStories, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.NONE: 0>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['all'], 'ir_enable_torch_wrap': False, 'splitting_ops': [], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': None, 'compile_ranges_endpoints': [4096], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.NONE: 0>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': None, 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': True, 'fuse_act_quant': True, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'enable_qk_norm_rope_fusion': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False, 'fuse_qk_norm_rope_kvcache': False}, 'max_cudagraph_capture_size': None, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native']), enable_flashinfer_autotune=True, enable_cutedsl_warmup=True, enable_jit_warmup=False, moe_backend='auto', sparse_indexer_topk_backend='auto', linear_backend='auto', linear_backend_per_quant=None)
+WARNING 11-20 12:25:13 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+Using qaicrt from /opt/qti-aic/dev/lib/x86_64/
+INFO 11-20 12:25:13 [rejection_sampler_shim.py:99] vllm_qaic: rejection sampler uses upstream Triton kernels with fp32 uniform probabilities on QAIC PYT (ngram/suffix SpD enabled).
+Loading QAic Ops library from: /opt/qti-aic/dev/lib/common/qaicmlops/libQAicV68Ops.so
+INFO 11-20 12:25:14 [parallel_state.py:1827] world_size=1 rank=0 local_rank=0 distributed_init_method=file:///tmp/vllm_dist_cda6931c900a42dbb537c650d861dafc backend=qccl
+INFO 11-20 12:25:14 [parallel_state.py:2267] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, ETP rank 0, EP rank 0, EPLB rank N/A
+WARNING 11-20 12:25:14 [worker.py:124] Reducing Torch parallelism from 128 threads to 8 to avoid unnecessary CPU contention. Set VLLM_QAIC_MAX_CPU_THREADS to tune this value as needed.
+WARNING 11-20 12:25:14 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+INFO 11-20 12:25:14 [gpu_model_runner.py:5317] Starting to load model theo77186/Qwen3-Next-70M-TinyStories...
+INFO 11-20 12:25:15 [qwen_gdn_linear_attn.py:176] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).
+INFO 11-20 12:25:15 [qwen_gdn_linear_attn.py:528] GDN decode kernel: cuda
+INFO 11-20 12:25:15 [weight_utils.py:895] Filesystem type for checkpoints: EXT4. Checkpoint size: 0.13 GiB. Available RAM: 852.50 GiB.
+INFO 11-20 12:25:15 [weight_utils.py:918] Auto-prefetch is disabled because the filesystem (EXT4) is not a recognized network FS (NFS/Lustre). If you want to force prefetching, start vLLM with --safetensors-load-strategy=prefetch.
+Loading safetensors checkpoint shards:   0% Completed | 0/1 [00:00<?, ?it/s]
+Loading safetensors checkpoint shards: 100% Completed | 1/1 [00:00<00:00,  2.86it/s]
+Loading safetensors checkpoint shards: 100% Completed | 1/1 [00:00<00:00,  2.85it/s]
+
+INFO 11-20 12:25:15 [default_loader.py:430] Loading weights took 0.37 seconds
+INFO 11-20 12:25:15 [gpu_model_runner.py:5348] Loading drafter model...
+INFO 11-20 12:25:16 [gpu_model_runner.py:5416] Model loading took 0.2 GiB memory and 0.961968 seconds
+INFO 11-20 12:25:16 [interface.py:933] Setting attention block size to 80 tokens to ensure that attention page size is >= mamba page size.
+INFO 11-20 12:25:16 [interface.py:957] Padding mamba page size by 12.68% to ensure that mamba page size and attention page size are exactly equal.
+INFO 11-20 12:25:16 [utils.py:320] Using LBNHC KV cache layout.
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/third_party/flash_linear_attention/ops/fused_gdn_prefill_post_conv.py:20:1: warning: Cannot transform tensor of pointers into a single base pointer with tensor of offsets
+def _fused_post_conv_kernel(
+^
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/third_party/flash_linear_attention/ops/fused_gdn_prefill_post_conv.py:20:1: note: see current operation: 
+module {
+  tt.func public @_fused_post_conv_kernel(%arg0: !tt.ptr<f16> {tt.divisibility = 128 : i32}, %arg1: !tt.ptr<f16> {tt.divisibility = 16 : i32}, %arg2: !tt.ptr<f16> {tt.divisibility = 16 : i32}, %arg3: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg4: !tt.ptr<f16> {tt.divisibility = 16 : i32}, %arg5: !tt.ptr<f16> {tt.divisibility = 16 : i32}, %arg6: !tt.ptr<f16> {tt.divisibility = 128 : i32}, %arg7: !tt.ptr<f16> {tt.divisibility = 16 : i32}, %arg8: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg9: !tt.ptr<f32> {tt.divisibility = 128 : i32}, %arg10: i32 {tt.divisibility = 16 : i32}, %arg11: i32, %arg12: i32, %arg13: i32 {tt.divisibility = 16 : i32}, %arg14: i32 {tt.divisibility = 16 : i32}, %arg15: i32 {tt.divisibility = 16 : i32}, %arg16: i32 {tt.divisibility = 16 : i32}) attributes {noinline = false} {
+    %c0_i32 = arith.constant 0 : i32
+    %c0_i32_0 = arith.constant 0 : i32
+    %c0_i32_1 = arith.constant 0 : i32
+    %c0_i32_2 = arith.constant 0 : i32
+    %c0_i32_3 = arith.constant 0 : i32
+    %c0_i32_4 = arith.constant 0 : i32
+    %c0_i32_5 = arith.constant 0 : i32
+    %c0_i32_6 = arith.constant 0 : i32
+    %c0_i32_7 = arith.constant 0 : i32
+    %c0_i32_8 = arith.constant 0 : i32
+    %c2 = arith.constant 2 : index
+    %c256 = arith.constant 256 : index
+    %c128 = arith.constant 128 : index
+    %cst = arith.constant 0.000000e+00 : f16
+    %c16 = arith.constant 16 : index
+    %cst_9 = arith.constant dense<2.000000e+01> : tensor<16xf32>
+    %cst_10 = arith.constant dense<0.000000e+00> : tensor<16xf32>
+    %cst_11 = arith.constant 0.000000e+00 : f32
+    %cst_12 = arith.constant dense<1.000000e+00> : tensor<16xf32>
+    %cst_13 = arith.constant dense<9.99999997E-7> : tensor<16xf32>
+    %c128_i32 = arith.constant 128 : i32
+    %c1_i32 = arith.constant 1 : i32
+    %c16_i32 = arith.constant 16 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = tt.get_program_id y : i32
+    %2 = arith.muli %0, %c16_i32 : i32
+    %3 = arith.index_cast %2 : i32 to index
+    %4 = arith.cmpi slt, %1, %c1_i32 : i32
+    scf.if %4 {
+      %5 = arith.muli %1, %c128_i32 : i32
+      %6 = arith.index_cast %5 : i32 to index
+      %7 = arith.index_cast %arg10 : i32 to index
+      %8 = arith.muli %3, %7 : index
+      %9 = arith.addi %8, %6 : index
+      %10 = tts.make_tptr %arg0 to sizes: [16, 128], strides: [%7, 1], offsets: [%9, 0], shape: [0, 0], order: [] : <f16> to tensor<16x128x!tt.ptr<f16>>
+      %11 = arith.addi %3, %c16 : index
+      %12 = arith.index_cast %arg16 : i32 to index
+      %13 = arith.minsi %11, %12 : index
+      %14 = arith.maxsi %13, %3 : index
+      %15 = arith.subi %14, %3 : index
+      %16 = arith.minsi %15, %c16 : index
+      %17 = "tts.load"(%10, %16, %cst) <{operandSegmentSizes = array<i32: 1, 1, 1>, static_mask_dims = array<i64: -9223372036854775808, 128>}> : (tensor<16x128x!tt.ptr<f16>>, index, f16) -> tensor<16x128xf16>
+      %18 = arith.extf %17 : tensor<16x128xf16> to tensor<16x128xf32>
+      %19 = arith.addi %8, %c128 : index
+      %20 = arith.addi %19, %6 : index
+      %21 = tts.make_tptr %arg0 to sizes: [16, 128], strides: [%7, 1], offsets: [%20, 0], shape: [0, 0], order: [] : <f16> to tensor<16x128x!tt.ptr<f16>>
+      %22 = "tts.load"(%21, %16, %cst) <{operandSegmentSizes = array<i32: 1, 1, 1>, static_mask_dims = array<i64: -9223372036854775808, 128>}> : (tensor<16x128x!tt.ptr<f16>>, index, f16) -> tensor<16x128xf16>
+      %23 = arith.extf %22 : tensor<16x128xf16> to tensor<16x128xf32>
+      %24 = arith.mulf %18, %18 : tensor<16x128xf32>
+      %25 = "tt.reduce"(%24) <{axis = 1 : i32}> ({
+      ^bb0(%arg17: f32, %arg18: f32):
+        %50 = arith.addf %arg17, %arg18 : f32
+        tt.reduce.return %50 : f32
+      }) : (tensor<16x128xf32>) -> tensor<16xf32>
+      %26 = arith.addf %25, %cst_13 : tensor<16xf32>
+      %27 = math.sqrt %26 : tensor<16xf32>
+      %28 = arith.divf %cst_12, %27 : tensor<16xf32>
+      %29 = tt.expand_dims %28 {axis = 1 : i32} : tensor<16xf32> -> tensor<16x1xf32>
+      %30 = tt.broadcast %29 : tensor<16x1xf32> -> tensor<16x128xf32>
+      %31 = arith.mulf %18, %30 : tensor<16x128xf32>
+      %32 = arith.mulf %23, %23 : tensor<16x128xf32>
+      %33 = "tt.reduce"(%32) <{axis = 1 : i32}> ({
+      ^bb0(%arg17: f32, %arg18: f32):
+        %50 = arith.addf %arg17, %arg18 : f32
+        tt.reduce.return %50 : f32
+      }) : (tensor<16x128xf32>) -> tensor<16xf32>
+      %34 = arith.addf %33, %cst_13 : tensor<16xf32>
+      %35 = math.sqrt %34 : tensor<16xf32>
+      %36 = arith.divf %cst_12, %35 : tensor<16xf32>
+      %37 = tt.expand_dims %36 {axis = 1 : i32} : tensor<16xf32> -> tensor<16x1xf32>
+      %38 = tt.broadcast %37 : tensor<16x1xf32> -> tensor<16x128xf32>
+      %39 = arith.mulf %23, %38 : tensor<16x128xf32>
+      %40 = arith.index_cast %arg13 : i32 to index
+      %41 = arith.muli %3, %40 : index
+      %42 = arith.addi %41, %6 : index
+      %43 = tts.make_tptr %arg5 to sizes: [16, 128], strides: [%40, 1], offsets: [%42, 0], shape: [0, 0], order: [] : <f16> to tensor<16x128x!tt.ptr<f16>>
+      %44 = arith.truncf %31 : tensor<16x128xf32> to tensor<16x128xf16>
+      "tts.store"(%43, %44, %16) <{static_mask_dims = array<i64: -9223372036854775808, 128>}> : (tensor<16x128x!tt.ptr<f16>>, tensor<16x128xf16>, index) -> ()
+      %45 = arith.index_cast %arg14 : i32 to index
+      %46 = arith.muli %3, %45 : index
+      %47 = arith.addi %46, %6 : index
+      %48 = tts.make_tptr %arg6 to sizes: [16, 128], strides: [%45, 1], offsets: [%47, 0], shape: [0, 0], order: [] : <f16> to tensor<16x128x!tt.ptr<f16>>
+      %49 = arith.truncf %39 : tensor<16x128xf32> to tensor<16x128xf16>
+      "tts.store"(%48, %49, %16) <{static_mask_dims = array<i64: -9223372036854775808, 128>}> : (tensor<16x128x!tt.ptr<f16>>, tensor<16x128xf16>, index) -> ()
+    } else {
+      %5 = arith.subi %1, %c1_i32 : i32
+      %6 = arith.index_cast %5 : i32 to index
+      %7 = arith.muli %5, %c128_i32 : i32
+      %8 = arith.index_cast %7 : i32 to index
+      %9 = arith.index_cast %arg10 : i32 to index
+      %10 = arith.muli %3, %9 : index
+      %11 = arith.addi %10, %c256 : index
+      %12 = arith.addi %11, %8 : index
+      %13 = tts.make_tptr %arg0 to sizes: [16, 128], strides: [%9, 1], offsets: [%12, 0], shape: [0, 0], order: [] : <f16> to tensor<16x128x!tt.ptr<f16>>
+      %14 = arith.addi %3, %c16 : index
+      %15 = arith.index_cast %arg16 : i32 to index
+      %16 = arith.minsi %14, %15 : index
+      %17 = arith.maxsi %16, %3 : index
+      %18 = arith.subi %17, %3 : index
+      %19 = arith.minsi %18, %c16 : index
+      %20 = "tts.load"(%13, %19, %cst) <{operandSegmentSizes = array<i32: 1, 1, 1>, static_mask_dims = array<i64: -9223372036854775808, 128>}> : (tensor<16x128x!tt.ptr<f16>>, index, f16) -> tensor<16x128xf16>
+      %21 = arith.index_cast %arg15 : i32 to index
+      %22 = arith.muli %3, %21 : index
+      %23 = arith.addi %22, %8 : index
+      %24 = tts.make_tptr %arg7 to sizes: [16, 128], strides: [%21, 1], offsets: [%23, 0], shape: [0, 0], order: [] : <f16> to tensor<16x128x!tt.ptr<f16>>
+      "tts.store"(%24, %20, %19) <{static_mask_dims = array<i64: -9223372036854775808, 128>}> : (tensor<16x128x!tt.ptr<f16>>, tensor<16x128xf16>, index) -> ()
+      %25 = tt.addptr %arg3, %5 : !tt.ptr<f32>, i32
+      %26 = tt.load %25 : !tt.ptr<f32>
+      %27 = tt.addptr %arg4, %5 : !tt.ptr<f16>, i32
+      %28 = tt.load %27 : !tt.ptr<f16>
+      %29 = arith.extf %28 : f16 to f32
+      %30 = arith.index_cast %arg11 : i32 to index
+      %31 = arith.muli %3, %30 : index
+      %32 = arith.addi %31, %6 : index
+      %33 = tts.make_tptr %arg1 to sizes: [16], strides: [%30], offsets: [%32], shape: [0], order: [] : <f16> to tensor<16x!tt.ptr<f16>>
+      %34 = "tts.load"(%33, %18, %cst) <{operandSegmentSizes = array<i32: 1, 1, 1>, static_mask_dims = array<i64: -9223372036854775808>}> : (tensor<16x!tt.ptr<f16>>, index, f16) -> tensor<16xf16>
+      %35 = arith.extf %34 : tensor<16xf16> to tensor<16xf32>
+      %36 = arith.index_cast %arg12 : i32 to index
+      %37 = arith.muli %3, %36 : index
+      %38 = arith.addi %37, %6 : index
+      %39 = tts.make_tptr %arg2 to sizes: [16], strides: [%36], offsets: [%38], shape: [0], order: [] : <f16> to tensor<16x!tt.ptr<f16>>
+      %40 = "tts.load"(%39, %18, %cst) <{operandSegmentSizes = array<i32: 1, 1, 1>, static_mask_dims = array<i64: -9223372036854775808>}> : (tensor<16x!tt.ptr<f16>>, index, f16) -> tensor<16xf16>
+      %41 = arith.extf %40 : tensor<16xf16> to tensor<16xf32>
+      %42 = tt.splat %29 : f32 -> tensor<16xf32>
+      %43 = arith.addf %35, %42 : tensor<16xf32>
+      %44 = arith.cmpf ogt, %43, %cst_10 : tensor<16xf32>
+      %45 = arith.subf %cst_10, %43 : tensor<16xf32>
+      %46 = math.exp %45 : tensor<16xf32>
+      %47 = arith.addf %46, %cst_12 : tensor<16xf32>
+      %48 = math.log %47 : tensor<16xf32>
+      %49 = arith.addf %43, %48 : tensor<16xf32>
+      %50 = math.exp %43 : tensor<16xf32>
+      %51 = arith.addf %50, %cst_12 : tensor<16xf32>
+      %52 = math.log %51 : tensor<16xf32>
+      %53 = arith.select %44, %49, %52 : tensor<16xi1>, tensor<16xf32>
+      %54 = arith.cmpf ole, %43, %cst_9 : tensor<16xf32>
+      %55 = arith.select %54, %53, %43 : tensor<16xi1>, tensor<16xf32>
+      %56 = math.exp %26 : f32
+      %57 = arith.subf %cst_11, %56 : f32
+      %58 = tt.splat %57 : f32 -> tensor<16xf32>
+      %59 = arith.mulf %58, %55 : tensor<16xf32>
+      %60 = arith.subf %cst_10, %41 : tensor<16xf32>
+      %61 = math.exp %60 : tensor<16xf32>
+      %62 = arith.addf %61, %cst_12 : tensor<16xf32>
+      %63 = arith.divf %cst_12, %62 : tensor<16xf32>
+      %64 = arith.muli %3, %c2 : index
+      %65 = arith.addi %64, %6 : index
+      %66 = tts.make_tptr %arg8 to sizes: [16], strides: [%c2], offsets: [%65], shape: [0], order: [] : <f32> to tensor<16x!tt.ptr<f32>>
+      "tts.store"(%66, %59, %18) <{static_mask_dims = array<i64: -9223372036854775808>}> : (tensor<16x!tt.ptr<f32>>, tensor<16xf32>, index) -> ()
+      %67 = tts.make_tptr %arg9 to sizes: [16], strides: [%c2], offsets: [%65], shape: [0], order: [] : <f32> to tensor<16x!tt.ptr<f32>>
+      "tts.store"(%67, %63, %18) <{static_mask_dims = array<i64: -9223372036854775808>}> : (tensor<16x!tt.ptr<f32>>, tensor<16xf32>, index) -> ()
+    }
+    tt.return
+  }
+}
+INFO 11-20 12:25:23 [worker.py:383] Initial free memory 31.24 GiB, reserved 1.00 GiB memory for KV Cache as specified by kv_cache_memory_bytes config and skipped memory profiling. This does not respect the gpu_memory_utilization config. Only use kv_cache_memory_bytes config when you want manual control of KV cache memory size. If OOM'ed, check the difference of initial free memory between the current run and the previous run where kv_cache_memory_bytes is suggested and update it correspondingly.
+INFO 11-20 12:25:23 [kv_cache_utils.py:2395] QAIC KV cache size: 152,506 tokens, Maximum concurrency for 512 tokens per request: 297.86x
+WARMUP skipped
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/sample/rejection_sampler.py:949:1: warning: Cannot transform tensor of pointers into a single base pointer with tensor of offsets
+def expand_kernel(
+^
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/sample/rejection_sampler.py:949:1: note: see current operation: 
+module {
+  tt.func public @expand_kernel(%arg0: !tt.ptr<i32> {tt.divisibility = 16 : i32}, %arg1: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg2: !tt.ptr<i32> {tt.divisibility = 16 : i32}, %arg3: i32, %arg4: i32) attributes {noinline = false} {
+    %c0_i32 = arith.constant 0 : i32
+    %c0_i32_0 = arith.constant 0 : i32
+    %c0_i32_1 = arith.constant 0 : i32
+    %c0 = arith.constant 0 : index
+    %c128 = arith.constant 128 : index
+    %c0_i32_2 = arith.constant 0 : i32
+    %c-1_i32 = arith.constant -1 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = arith.cmpi eq, %0, %c0_i32_2 : i32
+    %2 = scf.if %1 -> (i32) {
+      scf.yield %c0_i32_2 : i32
+    } else {
+      %21 = tt.addptr %arg2, %0 : !tt.ptr<i32>, i32
+      %22 = tt.addptr %21, %c-1_i32 : !tt.ptr<i32>, i32
+      %23 = tt.load %22 : !tt.ptr<i32>
+      scf.yield %23 : i32
+    }
+    %3 = arith.index_cast %2 : i32 to index
+    %4 = arith.addi %c0_i32, %0 : i32
+    %5 = tt.addptr %arg2, %0 : !tt.ptr<i32>, i32
+    %6 = tt.load %5 : !tt.ptr<i32>
+    %7 = arith.subi %6, %2 : i32
+    %8 = arith.addi %c0_i32_0, %0 : i32
+    %9 = tt.addptr %arg1, %0 : !tt.ptr<i32>, i32
+    %10 = tt.load %9 : !tt.ptr<i32>
+    %11 = arith.cmpi eq, %10, %arg3 : i32
+    %12 = arith.extsi %arg4 : i32 to i64
+    %13 = arith.extsi %10 : i32 to i64
+    %14 = arith.select %11, %12, %13 : i64
+    %15 = tts.make_tptr %arg0 to sizes: [128], strides: [1], offsets: [%3], shape: [0], order: [] : <i32> to tensor<128x!tt.ptr<i32>>
+    %16 = tt.splat %14 : i64 -> tensor<128xi64>
+    %17 = arith.trunci %16 : tensor<128xi64> to tensor<128xi32>
+    %18 = arith.index_cast %7 : i32 to index
+    %19 = arith.minsi %18, %c128 : index
+    %20 = arith.maxsi %19, %c0 : index
+    "tts.store"(%15, %17, %20) <{static_mask_dims = array<i64: -9223372036854775808>}> : (tensor<128x!tt.ptr<i32>>, tensor<128xi32>, index) -> ()
+    tt.return
+  }
+}
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/sample/rejection_sampler.py:949:1: warning: Cannot transform tensor of pointers into a single base pointer with tensor of offsets
+def expand_kernel(
+^
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/sample/rejection_sampler.py:949:1: note: see current operation: 
+module {
+  tt.func public @expand_kernel(%arg0: !tt.ptr<f32> {tt.divisibility = 128 : i32}, %arg1: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg2: !tt.ptr<i32> {tt.divisibility = 16 : i32}, %arg3: i32, %arg4: i32) attributes {noinline = false} {
+    %c0_i32 = arith.constant 0 : i32
+    %c0_i32_0 = arith.constant 0 : i32
+    %c0_i32_1 = arith.constant 0 : i32
+    %c0 = arith.constant 0 : index
+    %c128 = arith.constant 128 : index
+    %c0_i32_2 = arith.constant 0 : i32
+    %c-1_i32 = arith.constant -1 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = arith.cmpi eq, %0, %c0_i32_2 : i32
+    %2 = scf.if %1 -> (i32) {
+      scf.yield %c0_i32_2 : i32
+    } else {
+      %20 = tt.addptr %arg2, %0 : !tt.ptr<i32>, i32
+      %21 = tt.addptr %20, %c-1_i32 : !tt.ptr<i32>, i32
+      %22 = tt.load %21 : !tt.ptr<i32>
+      scf.yield %22 : i32
+    }
+    %3 = arith.index_cast %2 : i32 to index
+    %4 = arith.addi %c0_i32, %0 : i32
+    %5 = tt.addptr %arg2, %0 : !tt.ptr<i32>, i32
+    %6 = tt.load %5 : !tt.ptr<i32>
+    %7 = arith.subi %6, %2 : i32
+    %8 = arith.addi %c0_i32_0, %0 : i32
+    %9 = tt.addptr %arg1, %0 : !tt.ptr<f32>, i32
+    %10 = tt.load %9 : !tt.ptr<f32>
+    %11 = arith.sitofp %arg3 : i32 to f32
+    %12 = arith.cmpf oeq, %10, %11 : f32
+    %13 = arith.sitofp %arg4 : i32 to f32
+    %14 = arith.select %12, %13, %10 : f32
+    %15 = tts.make_tptr %arg0 to sizes: [128], strides: [1], offsets: [%3], shape: [0], order: [] : <f32> to tensor<128x!tt.ptr<f32>>
+    %16 = tt.splat %14 : f32 -> tensor<128xf32>
+    %17 = arith.index_cast %7 : i32 to index
+    %18 = arith.minsi %17, %c128 : index
+    %19 = arith.maxsi %18, %c0 : index
+    "tts.store"(%15, %16, %19) <{static_mask_dims = array<i64: -9223372036854775808>}> : (tensor<128x!tt.ptr<f32>>, tensor<128xf32>, index) -> ()
+    tt.return
+  }
+}
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/sample/rejection_sampler.py:719:1: warning: Cannot transform tensor of pointers into a single base pointer with tensor of offsets
+def rejection_greedy_sample_kernel(
+^
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/sample/rejection_sampler.py:719:1: note: see current operation: 
+module {
+  tt.func public @rejection_greedy_sample_kernel(%arg0: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg1: !tt.ptr<i32> {tt.divisibility = 16 : i32}, %arg2: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg3: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg4: !tt.ptr<i32> {tt.divisibility = 16 : i32}, %arg5: !tt.ptr<i1> {tt.divisibility = 16 : i32}, %arg6: i32, %arg7: !tt.ptr<f32> {tt.divisibility = 16 : i32}) attributes {noinline = false} {
+    %c0_i32 = arith.constant 0 : i32
+    %c0_i32_0 = arith.constant 0 : i32
+    %c0_i32_1 = arith.constant 0 : i32
+    %c0_i32_2 = arith.constant 0 : i32
+    %c0_i32_3 = arith.constant 0 : i32
+    %c0_i32_4 = arith.constant 0 : i32
+    %c0_i32_5 = arith.constant 0 : i32
+    %c0_i8 = arith.constant 0 : i8
+    %c0_i32_6 = arith.constant 0 : i32
+    %c1_i32 = arith.constant 1 : i32
+    %false = arith.constant false
+    %true = arith.constant true
+    %c-1_i32 = arith.constant -1 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = tt.addptr %arg5, %0 : !tt.ptr<i1>, i32
+    %2 = tt.bitcast %1 : !tt.ptr<i1> -> !tt.ptr<i8>
+    %3 = tt.load %2 : !tt.ptr<i8>
+    %4 = arith.cmpi eq, %3, %c0_i8 : i8
+    cf.cond_br %4, ^bb1, ^bb2
+  ^bb1:  // pred: ^bb0
+    tt.return
+  ^bb2:  // pred: ^bb0
+    %5 = arith.cmpi eq, %0, %c0_i32_6 : i32
+    %6 = scf.if %5 -> (i32) {
+      scf.yield %c0_i32_6 : i32
+    } else {
+      %11 = tt.addptr %arg1, %0 : !tt.ptr<i32>, i32
+      %12 = tt.addptr %11, %c-1_i32 : !tt.ptr<i32>, i32
+      %13 = tt.load %12 : !tt.ptr<i32>
+      scf.yield %13 : i32
+    }
+    %7 = tt.addptr %arg1, %0 : !tt.ptr<i32>, i32
+    %8 = tt.load %7 : !tt.ptr<i32>
+    %9 = arith.subi %8, %6 : i32
+    %10 = scf.for %arg8 = %c0_i32_6 to %9 step %c1_i32 iter_args(%arg9 = %false) -> (i1)  : i32 {
+      %11 = scf.if %arg9 -> (i1) {
+        scf.yield %true : i1
+      } else {
+        %12 = tt.addptr %arg2, %6 : !tt.ptr<i32>, i32
+        %13 = tt.addptr %12, %arg8 : !tt.ptr<i32>, i32
+        %14 = tt.load %13 : !tt.ptr<i32>
+        %15 = tt.addptr %arg3, %6 : !tt.ptr<i32>, i32
+        %16 = tt.addptr %15, %arg8 : !tt.ptr<i32>, i32
+        %17 = tt.load %16 : !tt.ptr<i32>
+        %18 = arith.cmpi ne, %14, %17 : i32
+        %19 = arith.addi %arg6, %c1_i32 : i32
+        %20 = arith.muli %0, %19 : i32
+        %21 = tt.addptr %arg0, %20 : !tt.ptr<i32>, i32
+        %22 = tt.addptr %21, %arg8 : !tt.ptr<i32>, i32
+        tt.store %22, %17 : !tt.ptr<i32>
+        scf.yield %18 : i1
+      }
+      scf.yield %11 : i1
+    }
+    scf.if %10 {
+    } else {
+      %11 = tt.addptr %arg4, %0 : !tt.ptr<i32>, i32
+      %12 = tt.load %11 : !tt.ptr<i32>
+      %13 = arith.addi %arg6, %c1_i32 : i32
+      %14 = arith.muli %0, %13 : i32
+      %15 = tt.addptr %arg0, %14 : !tt.ptr<i32>, i32
+      %16 = tt.addptr %15, %9 : !tt.ptr<i32>, i32
+      tt.store %16, %12 : !tt.ptr<i32>
+    }
+    tt.return
+  }
+}
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/sample/rejection_sampler.py:822:1: warning: Cannot transform tensor of pointers into a single base pointer with tensor of offsets
+def rejection_random_sample_kernel(
+^
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/sample/rejection_sampler.py:822:1: note: see current operation: 
+module {
+  tt.func public @rejection_random_sample_kernel(%arg0: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg1: !tt.ptr<i32> {tt.divisibility = 16 : i32}, %arg2: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg3: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg4: !tt.ptr<i32> {tt.divisibility = 16 : i32}, %arg5: !tt.ptr<i32> {tt.divisibility = 16 : i32}, %arg6: !tt.ptr<f32> {tt.divisibility = 16 : i32}, %arg7: !tt.ptr<i1> {tt.divisibility = 16 : i32}, %arg8: i32, %arg9: i32 {tt.divisibility = 16 : i32}) attributes {noinline = false} {
+    %c0_i32 = arith.constant 0 : i32
+    %c0_i32_0 = arith.constant 0 : i32
+    %c0_i32_1 = arith.constant 0 : i32
+    %c0_i32_2 = arith.constant 0 : i32
+    %c0_i32_3 = arith.constant 0 : i32
+    %c0_i32_4 = arith.constant 0 : i32
+    %c0_i32_5 = arith.constant 0 : i32
+    %c0_i32_6 = arith.constant 0 : i32
+    %c0_i8 = arith.constant 0 : i8
+    %c0_i32_7 = arith.constant 0 : i32
+    %c1_i32 = arith.constant 1 : i32
+    %false = arith.constant false
+    %true = arith.constant true
+    %c-1_i32 = arith.constant -1 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = tt.addptr %arg7, %0 : !tt.ptr<i1>, i32
+    %2 = tt.bitcast %1 : !tt.ptr<i1> -> !tt.ptr<i8>
+    %3 = tt.load %2 : !tt.ptr<i8>
+    %4 = arith.cmpi ne, %3, %c0_i8 : i8
+    cf.cond_br %4, ^bb1, ^bb2
+  ^bb1:  // pred: ^bb0
+    tt.return
+  ^bb2:  // pred: ^bb0
+    %5 = arith.cmpi eq, %0, %c0_i32_7 : i32
+    %6 = scf.if %5 -> (i32) {
+      scf.yield %c0_i32_7 : i32
+    } else {
+      %11 = tt.addptr %arg1, %0 : !tt.ptr<i32>, i32
+      %12 = tt.addptr %11, %c-1_i32 : !tt.ptr<i32>, i32
+      %13 = tt.load %12 : !tt.ptr<i32>
+      scf.yield %13 : i32
+    }
+    %7 = tt.addptr %arg1, %0 : !tt.ptr<i32>, i32
+    %8 = tt.load %7 : !tt.ptr<i32>
+    %9 = arith.subi %8, %6 : i32
+    %10 = scf.for %arg10 = %c0_i32_7 to %9 step %c1_i32 iter_args(%arg11 = %false) -> (i1)  : i32 {
+      %11 = scf.if %arg11 -> (i1) {
+        scf.yield %true : i1
+      } else {
+        %12 = tt.addptr %arg2, %6 : !tt.ptr<i32>, i32
+        %13 = tt.addptr %12, %arg10 : !tt.ptr<i32>, i32
+        %14 = tt.load %13 : !tt.ptr<i32>
+        %15 = tt.addptr %arg6, %6 : !tt.ptr<f32>, i32
+        %16 = tt.addptr %15, %arg10 : !tt.ptr<f32>, i32
+        %17 = tt.load %16 : !tt.ptr<f32>
+        %18 = arith.cmpi slt, %14, %c0_i32_7 : i32
+        %19 = scf.if %18 -> (i1) {
+          scf.yield %false : i1
+        } else {
+          %26 = arith.addi %6, %arg10 : i32
+          %27 = arith.muli %26, %arg9 : i32
+          %28 = tt.addptr %arg3, %27 : !tt.ptr<f32>, i32
+          %29 = tt.addptr %28, %14 : !tt.ptr<f32>, i32
+          %30 = tt.load %29 : !tt.ptr<f32>
+          %31 = arith.cmpf oge, %30, %17 : f32
+          scf.yield %31 : i1
+        }
+        %20 = arith.xori %19, %true : i1
+        %21 = scf.if %19 -> (i32) {
+          scf.yield %14 : i32
+        } else {
+          %26 = tt.addptr %arg5, %6 : !tt.ptr<i32>, i32
+          %27 = tt.addptr %26, %arg10 : !tt.ptr<i32>, i32
+          %28 = tt.load %27 : !tt.ptr<i32>
+          scf.yield %28 : i32
+        }
+        %22 = arith.addi %arg8, %c1_i32 : i32
+        %23 = arith.muli %0, %22 : i32
+        %24 = tt.addptr %arg0, %23 : !tt.ptr<i32>, i32
+        %25 = tt.addptr %24, %arg10 : !tt.ptr<i32>, i32
+        tt.store %25, %21 : !tt.ptr<i32>
+        scf.yield %20 : i1
+      }
+      scf.yield %11 : i1
+    }
+    scf.if %10 {
+    } else {
+      %11 = tt.addptr %arg4, %0 : !tt.ptr<i32>, i32
+      %12 = tt.load %11 : !tt.ptr<i32>
+      %13 = arith.addi %arg8, %c1_i32 : i32
+      %14 = arith.muli %0, %13 : i32
+      %15 = tt.addptr %arg0, %14 : !tt.ptr<i32>, i32
+      %16 = tt.addptr %15, %9 : !tt.ptr<i32>, i32
+      tt.store %16, %12 : !tt.ptr<i32>
+    }
+    tt.return
+  }
+}
+INFO 11-20 12:25:24 [core.py:379] init engine (profile, create kv cache, warmup model) took 8.17 s
+INFO 11-20 12:25:24 [kv_cache_utils.py:748] kv cache group sizes [512, 512, 512, 80]
+INFO 11-20 12:25:24 [kv_cache_utils.py:749] kv lcm block sizes 2560
+INFO 11-20 12:25:25 [hf.py:642] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+Rendering prompts:   0%|          | 0/8 [00:00<?, ?it/s]Rendering prompts: 100%|██████████| 8/8 [00:00<00:00, 328.65it/s]
+Processed prompts:   0%|          | 0/8 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]CPU fallback op: aten::_index_put_impl_, execution started.
+CPU fallback op: aten::_index_put_impl_, time elapsed (us): 16069
+fallback arguments: Tensor(size=[8, 2, 128, 128],strides=[32768, 16384, 128, 1],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=524288,storage_nbytes=524288);;[Tensor(size=[8],strides=[1],offset=0,is_cont=true,dtype=Bool,device=qaic:0,tensor_nbytes=8,storage_nbytes=8)?;];;Tensor(size=[],strides=[],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=2,storage_nbytes=2);;Scalar(dtype=Bool,value=false);;Scalar(dtype=Bool,value=false);;
+CPU fallback op: aten::_index_put_impl_, execution started.
+CPU fallback op: aten::_index_put_impl_, time elapsed (us): 631186
+fallback arguments: Tensor(size=[6553, 2, 128, 128],strides=[40960, 16384, 128, 1],offset=3584,is_cont=false,dtype=Half,device=qaic:0,tensor_nbytes=429457408,storage_nbytes=1073643520);;[Tensor(size=[8],strides=[5],offset=0,is_cont=false,dtype=Int,device=qaic:0,tensor_nbytes=32,storage_nbytes=160)?;];;Tensor(size=[8, 2, 128, 128],strides=[32768, 16384, 128, 1],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=524288,storage_nbytes=524288);;Scalar(dtype=Bool,value=false);;Scalar(dtype=Bool,value=false);;
+CPU fallback op: aten::_index_put_impl_, execution started.
+CPU fallback op: aten::_index_put_impl_, time elapsed (us): 15536
+fallback arguments: Tensor(size=[8, 2, 128, 128],strides=[32768, 16384, 128, 1],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=524288,storage_nbytes=524288);;[Tensor(size=[8],strides=[1],offset=0,is_cont=true,dtype=Bool,device=qaic:0,tensor_nbytes=8,storage_nbytes=8)?;];;Tensor(size=[],strides=[],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=2,storage_nbytes=2);;Scalar(dtype=Bool,value=false);;Scalar(dtype=Bool,value=false);;
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/triton/language/core.py:2541: UserWarning: tl.make_block_ptr is deprecated. Use TensorDescriptor or tl.make_tensor_descriptor instead.
+  warn("tl.make_block_ptr is deprecated. Use TensorDescriptor or tl.make_tensor_descriptor instead.")
+CPU fallback op: aten::_index_put_impl_, execution started.
+CPU fallback op: aten::_index_put_impl_, time elapsed (us): 564104
+fallback arguments: Tensor(size=[6553, 2, 128, 128],strides=[40960, 16384, 128, 1],offset=3584,is_cont=false,dtype=Half,device=qaic:0,tensor_nbytes=429457408,storage_nbytes=1073643520);;[Tensor(size=[8],strides=[5],offset=0,is_cont=false,dtype=Int,device=qaic:0,tensor_nbytes=32,storage_nbytes=160)?;];;Tensor(size=[8, 2, 128, 128],strides=[32768, 16384, 128, 1],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=524288,storage_nbytes=524288);;Scalar(dtype=Bool,value=false);;Scalar(dtype=Bool,value=false);;
+CPU fallback op: aten::_index_put_impl_, execution started.
+CPU fallback op: aten::_index_put_impl_, time elapsed (us): 15642
+fallback arguments: Tensor(size=[8, 2, 128, 128],strides=[32768, 16384, 128, 1],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=524288,storage_nbytes=524288);;[Tensor(size=[8],strides=[1],offset=0,is_cont=true,dtype=Bool,device=qaic:0,tensor_nbytes=8,storage_nbytes=8)?;];;Tensor(size=[],strides=[],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=2,storage_nbytes=2);;Scalar(dtype=Bool,value=false);;Scalar(dtype=Bool,value=false);;
+CPU fallback op: aten::_index_put_impl_, execution started.
+CPU fallback op: aten::_index_put_impl_, time elapsed (us): 620290
+fallback arguments: Tensor(size=[6553, 2, 128, 128],strides=[40960, 16384, 128, 1],offset=3584,is_cont=false,dtype=Half,device=qaic:0,tensor_nbytes=429457408,storage_nbytes=1073643520);;[Tensor(size=[8],strides=[5],offset=0,is_cont=false,dtype=Int,device=qaic:0,tensor_nbytes=32,storage_nbytes=160)?;];;Tensor(size=[8, 2, 128, 128],strides=[32768, 16384, 128, 1],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=524288,storage_nbytes=524288);;Scalar(dtype=Bool,value=false);;Scalar(dtype=Bool,value=false);;
+CPU fallback op: aten::_index_put_impl_, execution started.
+CPU fallback op: aten::_index_put_impl_, time elapsed (us): 15216
+fallback arguments: Tensor(size=[8, 2, 128, 128],strides=[32768, 16384, 128, 1],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=524288,storage_nbytes=524288);;[Tensor(size=[8],strides=[1],offset=0,is_cont=true,dtype=Bool,device=qaic:0,tensor_nbytes=8,storage_nbytes=8)?;];;Tensor(size=[],strides=[],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=2,storage_nbytes=2);;Scalar(dtype=Bool,value=false);;Scalar(dtype=Bool,value=false);;
+CPU fallback op: aten::_index_put_impl_, execution started.
+CPU fallback op: aten::_index_put_impl_, time elapsed (us): 655898
+fallback arguments: Tensor(size=[6553, 2, 128, 128],strides=[40960, 16384, 128, 1],offset=268414464,is_cont=false,dtype=Half,device=qaic:0,tensor_nbytes=429457408,storage_nbytes=1073643520);;[Tensor(size=[8],strides=[5],offset=0,is_cont=false,dtype=Int,device=qaic:0,tensor_nbytes=32,storage_nbytes=160)?;];;Tensor(size=[8, 2, 128, 128],strides=[32768, 16384, 128, 1],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=524288,storage_nbytes=524288);;Scalar(dtype=Bool,value=false);;Scalar(dtype=Bool,value=false);;
+CPU fallback op: aten::_index_put_impl_, execution started.
+CPU fallback op: aten::_index_put_impl_, time elapsed (us): 12693
+fallback arguments: Tensor(size=[8, 2, 128, 128],strides=[32768, 16384, 128, 1],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=524288,storage_nbytes=524288);;[Tensor(size=[8],strides=[1],offset=0,is_cont=true,dtype=Bool,device=qaic:0,tensor_nbytes=8,storage_nbytes=8)?;];;Tensor(size=[],strides=[],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=2,storage_nbytes=2);;Scalar(dtype=Bool,value=false);;Scalar(dtype=Bool,value=false);;
+CPU fallback op: aten::_index_put_impl_, execution started.
+CPU fallback op: aten::_index_put_impl_, time elapsed (us): 622885
+fallback arguments: Tensor(size=[6553, 2, 128, 128],strides=[40960, 16384, 128, 1],offset=268414464,is_cont=false,dtype=Half,device=qaic:0,tensor_nbytes=429457408,storage_nbytes=1073643520);;[Tensor(size=[8],strides=[5],offset=0,is_cont=false,dtype=Int,device=qaic:0,tensor_nbytes=32,storage_nbytes=160)?;];;Tensor(size=[8, 2, 128, 128],strides=[32768, 16384, 128, 1],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=524288,storage_nbytes=524288);;Scalar(dtype=Bool,value=false);;Scalar(dtype=Bool,value=false);;
+CPU fallback op: aten::_index_put_impl_, execution started.
+CPU fallback op: aten::_index_put_impl_, time elapsed (us): 17972
+fallback arguments: Tensor(size=[8, 2, 128, 128],strides=[32768, 16384, 128, 1],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=524288,storage_nbytes=524288);;[Tensor(size=[8],strides=[1],offset=0,is_cont=true,dtype=Bool,device=qaic:0,tensor_nbytes=8,storage_nbytes=8)?;];;Tensor(size=[],strides=[],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=2,storage_nbytes=2);;Scalar(dtype=Bool,value=false);;Scalar(dtype=Bool,value=false);;
+CPU fallback op: aten::_index_put_impl_, execution started.
+CPU fallback op: aten::_index_put_impl_, time elapsed (us): 622716
+fallback arguments: Tensor(size=[6553, 2, 128, 128],strides=[40960, 16384, 128, 1],offset=268414464,is_cont=false,dtype=Half,device=qaic:0,tensor_nbytes=429457408,storage_nbytes=1073643520);;[Tensor(size=[8],strides=[5],offset=0,is_cont=false,dtype=Int,device=qaic:0,tensor_nbytes=32,storage_nbytes=160)?;];;Tensor(size=[8, 2, 128, 128],strides=[32768, 16384, 128, 1],offset=0,is_cont=true,dtype=Half,device=qaic:0,tensor_nbytes=524288,storage_nbytes=524288);;Scalar(dtype=Bool,value=false);;Scalar(dtype=Bool,value=false);;
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/numba/np/ufunc/parallel.py:373: NumbaWarning: The TBB threading layer requires TBB version 2021 update 6 or later i.e., TBB_INTERFACE_VERSION >= 12060. Found TBB_INTERFACE_VERSION = 12050. The TBB threading layer is disabled.
+  warnings.warn(problem)
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/sample/rejection_sampler.py:719:1: warning: Cannot transform tensor of pointers into a single base pointer with tensor of offsets
+def rejection_greedy_sample_kernel(
+^
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/sample/rejection_sampler.py:719:1: note: see current operation: 
+module {
+  tt.func public @rejection_greedy_sample_kernel(%arg0: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg1: !tt.ptr<i32> {tt.divisibility = 16 : i32}, %arg2: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg3: !tt.ptr<i32> {tt.divisibility = 16 : i32}, %arg4: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg5: i32) attributes {noinline = false} {
+    %c0_i32 = arith.constant 0 : i32
+    %c0_i32_0 = arith.constant 0 : i32
+    %c0_i32_1 = arith.constant 0 : i32
+    %c0_i32_2 = arith.constant 0 : i32
+    %c0_i32_3 = arith.constant 0 : i32
+    %c0_i32_4 = arith.constant 0 : i32
+    %c1_i32 = arith.constant 1 : i32
+    %false = arith.constant false
+    %true = arith.constant true
+    %c-1_i32 = arith.constant -1 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = arith.cmpi eq, %0, %c0_i32_4 : i32
+    %2 = scf.if %1 -> (i32) {
+      scf.yield %c0_i32_4 : i32
+    } else {
+      %7 = tt.addptr %arg1, %0 : !tt.ptr<i32>, i32
+      %8 = tt.addptr %7, %c-1_i32 : !tt.ptr<i32>, i32
+      %9 = tt.load %8 : !tt.ptr<i32>
+      scf.yield %9 : i32
+    }
+    %3 = tt.addptr %arg1, %0 : !tt.ptr<i32>, i32
+    %4 = tt.load %3 : !tt.ptr<i32>
+    %5 = arith.subi %4, %2 : i32
+    %6 = scf.for %arg6 = %c0_i32_4 to %5 step %c1_i32 iter_args(%arg7 = %false) -> (i1)  : i32 {
+      %7 = scf.if %arg7 -> (i1) {
+        scf.yield %true : i1
+      } else {
+        %8 = tt.addptr %arg2, %2 : !tt.ptr<i32>, i32
+        %9 = tt.addptr %8, %arg6 : !tt.ptr<i32>, i32
+        %10 = tt.load %9 : !tt.ptr<i32>
+        %11 = tt.addptr %arg3, %2 : !tt.ptr<i32>, i32
+        %12 = tt.addptr %11, %arg6 : !tt.ptr<i32>, i32
+        %13 = tt.load %12 : !tt.ptr<i32>
+        %14 = arith.cmpi ne, %10, %13 : i32
+        %15 = arith.addi %arg5, %c1_i32 : i32
+        %16 = arith.muli %0, %15 : i32
+        %17 = tt.addptr %arg0, %16 : !tt.ptr<i32>, i32
+        %18 = tt.addptr %17, %arg6 : !tt.ptr<i32>, i32
+        tt.store %18, %13 : !tt.ptr<i32>
+        scf.yield %14 : i1
+      }
+      scf.yield %7 : i1
+    }
+    scf.if %6 {
+    } else {
+      %7 = tt.addptr %arg4, %0 : !tt.ptr<i32>, i32
+      %8 = tt.load %7 : !tt.ptr<i32>
+      %9 = arith.addi %arg5, %c1_i32 : i32
+      %10 = arith.muli %0, %9 : i32
+      %11 = tt.addptr %arg0, %10 : !tt.ptr<i32>, i32
+      %12 = tt.addptr %11, %5 : !tt.ptr<i32>, i32
+      tt.store %12, %8 : !tt.ptr<i32>
+    }
+    tt.return
+  }
+}
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/sample/rejection_sampler.py:719:1: warning: Cannot transform tensor of pointers into a single base pointer with tensor of offsets
+def rejection_greedy_sample_kernel(
+^
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/sample/rejection_sampler.py:719:1: note: see current operation: 
+module {
+  tt.func public @rejection_greedy_sample_kernel(%arg0: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg1: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg2: !tt.ptr<i32> {tt.divisibility = 16 : i32}, %arg3: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg4: !tt.ptr<i32> {tt.divisibility = 16 : i32}, %arg5: i32) attributes {noinline = false} {
+    %c0_i32 = arith.constant 0 : i32
+    %c0_i32_0 = arith.constant 0 : i32
+    %c0_i32_1 = arith.constant 0 : i32
+    %c0_i32_2 = arith.constant 0 : i32
+    %c0_i32_3 = arith.constant 0 : i32
+    %c0_i32_4 = arith.constant 0 : i32
+    %c1_i32 = arith.constant 1 : i32
+    %false = arith.constant false
+    %true = arith.constant true
+    %c-1_i32 = arith.constant -1 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = arith.cmpi eq, %0, %c0_i32_4 : i32
+    %2 = scf.if %1 -> (i32) {
+      scf.yield %c0_i32_4 : i32
+    } else {
+      %7 = tt.addptr %arg1, %0 : !tt.ptr<i32>, i32
+      %8 = tt.addptr %7, %c-1_i32 : !tt.ptr<i32>, i32
+      %9 = tt.load %8 : !tt.ptr<i32>
+      scf.yield %9 : i32
+    }
+    %3 = tt.addptr %arg1, %0 : !tt.ptr<i32>, i32
+    %4 = tt.load %3 : !tt.ptr<i32>
+    %5 = arith.subi %4, %2 : i32
+    %6 = scf.for %arg6 = %c0_i32_4 to %5 step %c1_i32 iter_args(%arg7 = %false) -> (i1)  : i32 {
+      %7 = scf.if %arg7 -> (i1) {
+        scf.yield %true : i1
+      } else {
+        %8 = tt.addptr %arg2, %2 : !tt.ptr<i32>, i32
+        %9 = tt.addptr %8, %arg6 : !tt.ptr<i32>, i32
+        %10 = tt.load %9 : !tt.ptr<i32>
+        %11 = tt.addptr %arg3, %2 : !tt.ptr<i32>, i32
+        %12 = tt.addptr %11, %arg6 : !tt.ptr<i32>, i32
+        %13 = tt.load %12 : !tt.ptr<i32>
+        %14 = arith.cmpi ne, %10, %13 : i32
+        %15 = arith.addi %arg5, %c1_i32 : i32
+        %16 = arith.muli %0, %15 : i32
+        %17 = tt.addptr %arg0, %16 : !tt.ptr<i32>, i32
+        %18 = tt.addptr %17, %arg6 : !tt.ptr<i32>, i32
+        tt.store %18, %13 : !tt.ptr<i32>
+        scf.yield %14 : i1
+      }
+      scf.yield %7 : i1
+    }
+    scf.if %6 {
+    } else {
+      %7 = tt.addptr %arg4, %0 : !tt.ptr<i32>, i32
+      %8 = tt.load %7 : !tt.ptr<i32>
+      %9 = arith.addi %arg5, %c1_i32 : i32
+      %10 = arith.muli %0, %9 : i32
+      %11 = tt.addptr %arg0, %10 : !tt.ptr<i32>, i32
+      %12 = tt.addptr %11, %5 : !tt.ptr<i32>, i32
+      tt.store %12, %8 : !tt.ptr<i32>
+    }
+    tt.return
+  }
+}
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/sample/rejection_sampler.py:719:1: warning: Cannot transform tensor of pointers into a single base pointer with tensor of offsets
+def rejection_greedy_sample_kernel(
+^
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/sample/rejection_sampler.py:719:1: note: see current operation: 
+module {
+  tt.func public @rejection_greedy_sample_kernel(%arg0: !tt.ptr<i32> {tt.divisibility = 16 : i32}, %arg1: !tt.ptr<i32> {tt.divisibility = 16 : i32}, %arg2: !tt.ptr<i32> {tt.divisibility = 16 : i32}, %arg3: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg4: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg5: i32) attributes {noinline = false} {
+    %c0_i32 = arith.constant 0 : i32
+    %c0_i32_0 = arith.constant 0 : i32
+    %c0_i32_1 = arith.constant 0 : i32
+    %c0_i32_2 = arith.constant 0 : i32
+    %c0_i32_3 = arith.constant 0 : i32
+    %c0_i32_4 = arith.constant 0 : i32
+    %c1_i32 = arith.constant 1 : i32
+    %false = arith.constant false
+    %true = arith.constant true
+    %c-1_i32 = arith.constant -1 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = arith.cmpi eq, %0, %c0_i32_4 : i32
+    %2 = scf.if %1 -> (i32) {
+      scf.yield %c0_i32_4 : i32
+    } else {
+      %7 = tt.addptr %arg1, %0 : !tt.ptr<i32>, i32
+      %8 = tt.addptr %7, %c-1_i32 : !tt.ptr<i32>, i32
+      %9 = tt.load %8 : !tt.ptr<i32>
+      scf.yield %9 : i32
+    }
+    %3 = tt.addptr %arg1, %0 : !tt.ptr<i32>, i32
+    %4 = tt.load %3 : !tt.ptr<i32>
+    %5 = arith.subi %4, %2 : i32
+    %6 = scf.for %arg6 = %c0_i32_4 to %5 step %c1_i32 iter_args(%arg7 = %false) -> (i1)  : i32 {
+      %7 = scf.if %arg7 -> (i1) {
+        scf.yield %true : i1
+      } else {
+        %8 = tt.addptr %arg2, %2 : !tt.ptr<i32>, i32
+        %9 = tt.addptr %8, %arg6 : !tt.ptr<i32>, i32
+        %10 = tt.load %9 : !tt.ptr<i32>
+        %11 = tt.addptr %arg3, %2 : !tt.ptr<i32>, i32
+        %12 = tt.addptr %11, %arg6 : !tt.ptr<i32>, i32
+        %13 = tt.load %12 : !tt.ptr<i32>
+        %14 = arith.cmpi ne, %10, %13 : i32
+        %15 = arith.addi %arg5, %c1_i32 : i32
+        %16 = arith.muli %0, %15 : i32
+        %17 = tt.addptr %arg0, %16 : !tt.ptr<i32>, i32
+        %18 = tt.addptr %17, %arg6 : !tt.ptr<i32>, i32
+        tt.store %18, %13 : !tt.ptr<i32>
+        scf.yield %14 : i1
+      }
+      scf.yield %7 : i1
+    }
+    scf.if %6 {
+    } else {
+      %7 = tt.addptr %arg4, %0 : !tt.ptr<i32>, i32
+      %8 = tt.load %7 : !tt.ptr<i32>
+      %9 = arith.addi %arg5, %c1_i32 : i32
+      %10 = arith.muli %0, %9 : i32
+      %11 = tt.addptr %arg0, %10 : !tt.ptr<i32>, i32
+      %12 = tt.addptr %11, %5 : !tt.ptr<i32>, i32
+      tt.store %12, %8 : !tt.ptr<i32>
+    }
+    tt.return
+  }
+}
+Processed prompts:  12%|█▎        | 1/8 [00:14<01:43, 14.73s/it, est. speed input: 1.49 toks/s, output: 4.34 toks/s]INFO 11-20 12:25:44 [loggers.py:315] Engine 000: Avg prompt throughput: 7.1 tokens/s, Avg generation throughput: 20.7 tokens/s, Running: 7 reqs, Waiting: 0 reqs, QAIC KV cache usage: 1.7%, Prefix cache hit rate: 0.0%
+INFO 11-20 12:25:44 [metrics.py:120] SpecDecoding metrics: Mean acceptance length: 1.46, Accepted throughput: 6.38 tokens/s, Drafted throughput: 55.90 tokens/s, Accepted: 127 tokens, Drafted: 1112 tokens, Per-position acceptance rate: 0.155, 0.140, 0.090, 0.072, Avg Draft acceptance rate: 11.4%
+Processed prompts:  25%|██▌       | 2/8 [00:18<00:50,  8.39s/it, est. speed input: 1.93 toks/s, output: 6.85 toks/s]/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/sample/rejection_sampler.py:719:1: warning: Cannot transform tensor of pointers into a single base pointer with tensor of offsets
+def rejection_greedy_sample_kernel(
+^
+/prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/.venv_eager/lib/python3.12/site-packages/vllm/v1/sample/rejection_sampler.py:719:1: note: see current operation: 
+module {
+  tt.func public @rejection_greedy_sample_kernel(%arg0: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg1: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg2: !tt.ptr<i32> {tt.divisibility = 16 : i32}, %arg3: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg4: !tt.ptr<i32> {tt.divisibility = 128 : i32}, %arg5: i32) attributes {noinline = false} {
+    %c0_i32 = arith.constant 0 : i32
+    %c0_i32_0 = arith.constant 0 : i32
+    %c0_i32_1 = arith.constant 0 : i32
+    %c0_i32_2 = arith.constant 0 : i32
+    %c0_i32_3 = arith.constant 0 : i32
+    %c0_i32_4 = arith.constant 0 : i32
+    %c1_i32 = arith.constant 1 : i32
+    %false = arith.constant false
+    %true = arith.constant true
+    %c-1_i32 = arith.constant -1 : i32
+    %0 = tt.get_program_id x : i32
+    %1 = arith.cmpi eq, %0, %c0_i32_4 : i32
+    %2 = scf.if %1 -> (i32) {
+      scf.yield %c0_i32_4 : i32
+    } else {
+      %7 = tt.addptr %arg1, %0 : !tt.ptr<i32>, i32
+      %8 = tt.addptr %7, %c-1_i32 : !tt.ptr<i32>, i32
+      %9 = tt.load %8 : !tt.ptr<i32>
+      scf.yield %9 : i32
+    }
+    %3 = tt.addptr %arg1, %0 : !tt.ptr<i32>, i32
+    %4 = tt.load %3 : !tt.ptr<i32>
+    %5 = arith.subi %4, %2 : i32
+    %6 = scf.for %arg6 = %c0_i32_4 to %5 step %c1_i32 iter_args(%arg7 = %false) -> (i1)  : i32 {
+      %7 = scf.if %arg7 -> (i1) {
+        scf.yield %true : i1
+      } else {
+        %8 = tt.addptr %arg2, %2 : !tt.ptr<i32>, i32
+        %9 = tt.addptr %8, %arg6 : !tt.ptr<i32>, i32
+        %10 = tt.load %9 : !tt.ptr<i32>
+        %11 = tt.addptr %arg3, %2 : !tt.ptr<i32>, i32
+        %12 = tt.addptr %11, %arg6 : !tt.ptr<i32>, i32
+        %13 = tt.load %12 : !tt.ptr<i32>
+        %14 = arith.cmpi ne, %10, %13 : i32
+        %15 = arith.addi %arg5, %c1_i32 : i32
+        %16 = arith.muli %0, %15 : i32
+        %17 = tt.addptr %arg0, %16 : !tt.ptr<i32>, i32
+        %18 = tt.addptr %17, %arg6 : !tt.ptr<i32>, i32
+        tt.store %18, %13 : !tt.ptr<i32>
+        scf.yield %14 : i1
+      }
+      scf.yield %7 : i1
+    }
+    scf.if %6 {
+    } else {
+      %7 = tt.addptr %arg4, %0 : !tt.ptr<i32>, i32
+      %8 = tt.load %7 : !tt.ptr<i32>
+      %9 = arith.addi %arg5, %c1_i32 : i32
+      %10 = arith.muli %0, %9 : i32
+      %11 = tt.addptr %arg0, %10 : !tt.ptr<i32>, i32
+      %12 = tt.addptr %11, %5 : !tt.ptr<i32>, i32
+      tt.store %12, %8 : !tt.ptr<i32>
+    }
+    tt.return
+  }
+}
+Processed prompts:  38%|███▊      | 3/8 [00:20<00:27,  5.48s/it, est. speed input: 2.46 toks/s, output: 9.27 toks/s]Processed prompts:  50%|█████     | 4/8 [00:23<00:18,  4.57s/it, est. speed input: 3.27 toks/s, output: 10.72 toks/s]Processed prompts:  62%|██████▎   | 5/8 [00:25<00:10,  3.43s/it, est. speed input: 3.64 toks/s, output: 12.65 toks/s]Processed prompts:  75%|███████▌  | 6/8 [00:25<00:04,  2.32s/it, est. speed input: 4.24 toks/s, output: 15.09 toks/s]Processed prompts:  88%|████████▊ | 7/8 [00:25<00:01,  1.71s/it, est. speed input: 4.79 toks/s, output: 17.29 toks/s]Processed prompts: 100%|██████████| 8/8 [00:26<00:00,  1.50s/it, est. speed input: 5.27 toks/s, output: 19.00 toks/s]Processed prompts: 100%|██████████| 8/8 [00:26<00:00,  1.50s/it, est. speed input: 5.27 toks/s, output: 19.00 toks/s]Processed prompts: 100%|██████████| 8/8 [00:26<00:00,  3.37s/it, est. speed input: 5.27 toks/s, output: 19.00 toks/s]
+CHILD_RESULT {"method": "ngram", "model": "theo77186/Qwen3-Next-70M-TinyStories", "max_num_seqs": 8, "prompt_lens": [27, 22, 14, 15, 18, 16, 14, 16], "num_draft_tokens": 1420, "num_accepted_tokens": 153}

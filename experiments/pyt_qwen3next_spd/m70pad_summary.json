@@ -1,0 +1,34 @@
+{
+ "ngram": {
+  "error": null,
+  "num_draft_tokens": 1420,
+  "num_accepted_tokens": 153,
+  "probe": {
+   "steps": 178,
+   "steps_with_spec_decodes": 175,
+   "zero_draft_decode_rows": 0,
+   "hazard_rows": 0,
+   "hazard_samples": [],
+   "block_shape_sample": [
+    1,
+    5
+   ]
+  }
+ },
+ "suffix": {
+  "error": null,
+  "num_draft_tokens": 1128,
+  "num_accepted_tokens": 228,
+  "probe": {
+   "steps": 134,
+   "steps_with_spec_decodes": 131,
+   "zero_draft_decode_rows": 0,
+   "hazard_rows": 0,
+   "hazard_samples": [],
+   "block_shape_sample": [
+    1,
+    5
+   ]
+  }
+ }
+}

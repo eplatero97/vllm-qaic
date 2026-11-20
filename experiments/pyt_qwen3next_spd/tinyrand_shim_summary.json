@@ -1,0 +1,8 @@
+{
+ "baseline": {
+  "error": "rc=1, see /prj/crd/austin/validation/scratch/users/eplatero/vllm/vllm-qaic-pyt-ngram-suffix/experiments/pyt_qwen3next_spd/tinyrand_shim_baseline.log",
+  "num_draft_tokens": null,
+  "num_accepted_tokens": null,
+  "probe": null
+ }
+}
